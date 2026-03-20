@@ -1,0 +1,1355 @@
+<html lang="es"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TYR ai — Expo Logística Panamá 2026</title>
+
+    <!-- === FONTS: Archivo Black (display) + Space Grotesk (body) === -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+
+    <style>
+        /* =============================================
+           BOLD SIGNAL THEME — CSS CUSTOM PROPERTIES
+           Change these variables to restyle the whole deck
+           ============================================= */
+        :root {
+            /* Colors */
+            --bg-primary:   #1a1a1a;
+            --bg-gradient:  linear-gradient(135deg, #1a1a1a 0%, #282828 50%, #1a1a1a 100%);
+            --card-bg:      #FF5722;
+            --card-dark:    #E64A19;
+            --text-primary: #ffffff;
+            --text-on-card: #1a1a1a;
+            --text-muted:   rgba(255,255,255,0.45);
+            --border:       rgba(255,255,255,0.07);
+            --accent-amber: #FFB300;
+            --accent-teal:  #80DEEA;
+            --accent-green: #A5D6A7;
+
+            /* Typography */
+            --font-display: 'Archivo Black', sans-serif;
+            --font-body:    'Space Grotesk', sans-serif;
+
+            /* Fluid type scale */
+            --sz-hero:     clamp(4rem,   11vw, 10rem);
+            --sz-title:    clamp(2.2rem, 5vw,  4.2rem);
+            --sz-subtitle: clamp(1.1rem, 2.2vw, 1.7rem);
+            --sz-body:     clamp(0.95rem, 1.4vw, 1.2rem);
+            --sz-label:    clamp(0.75rem, 1vw,  0.95rem);
+            --sz-num:      clamp(5rem,   11vw, 9.5rem);
+            --sz-code:     clamp(0.72rem, 1.05vw, 0.9rem);
+
+            /* Spacing */
+            --pad:  clamp(1.5rem, 4vw,   4rem);
+            --gap:  clamp(0.7rem, 1.4vw, 1.4rem);
+
+            /* Motion */
+            --ease-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* =============================================
+           RESET
+           ============================================= */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* =============================================
+           VIEWPORT BASE — mandatory rules for every slide
+           ============================================= */
+        html {
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            height: 100%;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Every slide MUST use these rules — no exceptions */
+        .slide {
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Height breakpoints — prevent content overflow on short screens */
+        @media (max-height: 700px) {
+            :root {
+                --pad:  clamp(1rem,   2.5vw, 2rem);
+                --gap:  clamp(0.5rem, 1vw,   1rem);
+                --sz-hero:  clamp(2rem, 6vw, 5rem);
+                --sz-title: clamp(1.4rem, 3vw, 2.4rem);
+            }
+        }
+        @media (max-height: 600px) {
+            :root {
+                --pad:  clamp(0.75rem, 2vw, 1.5rem);
+                --gap:  clamp(0.4rem,  0.8vw, 0.8rem);
+                --sz-hero:  clamp(1.8rem, 5vw, 4rem);
+                --sz-title: clamp(1.2rem, 2.5vw, 2rem);
+            }
+        }
+        @media (max-height: 500px) {
+            :root {
+                --pad:  0.75rem;
+                --gap:  0.4rem;
+                --sz-hero:  clamp(1.4rem, 4vw, 3rem);
+                --sz-title: clamp(1rem, 2vw, 1.6rem);
+            }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .reveal, .reveal-scale, .reveal-left, .reveal-up {
+                transition: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+        }
+
+        /* =============================================
+           ENTRANCE ANIMATIONS
+           Triggered by .visible class (added by IntersectionObserver)
+           ============================================= */
+        .reveal       { opacity: 0; transform: translateY(22px);   transition: opacity .6s var(--ease-expo), transform .6s var(--ease-expo); }
+        .reveal-scale { opacity: 0; transform: scale(.93);          transition: opacity .7s var(--ease-expo), transform .7s var(--ease-expo); }
+        .reveal-left  { opacity: 0; transform: translateX(-28px);   transition: opacity .6s var(--ease-expo), transform .6s var(--ease-expo); }
+        .reveal-up    { opacity: 0; transform: translateY(-16px);   transition: opacity .5s var(--ease-expo), transform .5s var(--ease-expo); }
+
+        .slide.visible .reveal       { opacity: 1; transform: translateY(0); }
+        .slide.visible .reveal-scale { opacity: 1; transform: scale(1); }
+        .slide.visible .reveal-left  { opacity: 1; transform: translateX(0); }
+        .slide.visible .reveal-up    { opacity: 1; transform: translateY(0); }
+
+        /* Stagger helpers */
+        .d1 { transition-delay: 0.05s !important; }
+        .d2 { transition-delay: 0.15s !important; }
+        .d3 { transition-delay: 0.25s !important; }
+        .d4 { transition-delay: 0.35s !important; }
+        .d5 { transition-delay: 0.45s !important; }
+        .d6 { transition-delay: 0.55s !important; }
+
+        /* =============================================
+           PROGRESS BAR
+           ============================================= */
+        .progress-bar {
+            position: fixed; top: 0; left: 0;
+            height: 3px; width: 0%;
+            background: var(--card-bg);
+            transition: width .3s ease;
+            z-index: 1000;
+        }
+
+        /* =============================================
+           NAV DOTS (right edge)
+           ============================================= */
+        .nav-dots {
+            position: fixed;
+            right: clamp(1rem, 2vw, 1.75rem);
+            top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 8px;
+            z-index: 1000;
+        }
+        .nav-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none; cursor: pointer;
+            transition: all .3s var(--ease-expo);
+            padding: 0;
+        }
+        .nav-dot.active { background: var(--card-bg); transform: scale(1.6); }
+
+        /* =============================================
+           BOLD SIGNAL SIGNATURE ELEMENTS
+           ============================================= */
+
+        /* Large ghost number — top-left watermark */
+        .slide-num {
+            position: absolute;
+            top: var(--pad); left: var(--pad);
+            font-family: var(--font-display);
+            font-size: var(--sz-num);
+            color: rgba(255,255,255,0.05);
+            line-height: 1;
+            user-select: none; pointer-events: none;
+        }
+        .slide-num.on-orange { color: rgba(0,0,0,0.06); }
+
+        /* Breadcrumb label — top-right */
+        .slide-label {
+            position: absolute;
+            top: var(--pad);
+            right: clamp(2rem, 5vw, 5rem);
+            font-size: var(--sz-label);
+            letter-spacing: .14em; text-transform: uppercase;
+            color: var(--text-muted); font-weight: 500;
+        }
+        .slide-label .crumb { color: var(--card-bg); font-weight: 700; }
+        .slide-label.on-orange { color: rgba(0,0,0,0.35); }
+        .slide-label.on-orange .crumb { color: rgba(0,0,0,0.65); }
+
+        /* Orange accent line */
+        .accent-line {
+            width: clamp(36px, 5vw, 64px); height: 3px;
+            background: var(--card-bg); border-radius: 2px;
+            margin-bottom: var(--gap);
+        }
+        .accent-line.dark { background: rgba(0,0,0,0.3); }
+
+        /* Info card */
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: clamp(0.9rem, 1.8vw, 1.5rem);
+            transition: background .25s, border-color .25s;
+        }
+        .card:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,87,34,.3); }
+        .card .clabel {
+            font-size: var(--sz-label); text-transform: uppercase;
+            letter-spacing: .12em; color: var(--card-bg); font-weight: 700;
+            margin-bottom: .5em;
+        }
+        .card h3 {
+            font-family: var(--font-display);
+            font-size: clamp(1rem, 1.9vw, 1.35rem);
+            margin-bottom: .35em; color: var(--text-primary);
+        }
+        .card p { font-size: var(--sz-body); color: rgba(255,255,255,.6); line-height: 1.55; }
+
+        /* Stack pill */
+        .pill {
+            display: inline-block;
+            background: rgba(255,87,34,.1);
+            color: var(--card-bg); border: 1px solid rgba(255,87,34,.2);
+            border-radius: 100px;
+            padding: .28em .75em;
+            font-size: var(--sz-label); font-weight: 600;
+            letter-spacing: .05em;
+        }
+
+        /* =============================================
+           SLIDE 01 — TITLE
+           Full orange card as focal point
+           ============================================= */
+        .s-title {
+            background: var(--bg-gradient);
+            padding: var(--pad);
+            justify-content: flex-end;
+        }
+        .title-card {
+            background: var(--card-bg);
+            color: var(--text-on-card);
+            border-radius: 16px;
+            padding: clamp(2rem, 4vw, 3.5rem);
+            flex: 1;
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            min-height: 0; position: relative; overflow: hidden;
+        }
+        .title-card::after {
+            content: '';
+            position: absolute; top: 0; right: 0;
+            width: 45%; height: 100%;
+            background: linear-gradient(135deg, transparent 35%, rgba(0,0,0,.09) 100%);
+            pointer-events: none;
+        }
+        .t-eyebrow {
+            font-size: var(--sz-label); letter-spacing: .2em;
+            text-transform: uppercase; font-weight: 600; opacity: .6;
+        }
+        .t-main {
+            font-family: var(--font-display);
+            font-size: var(--sz-hero); line-height: .92;
+            color: var(--text-on-card);
+        }
+        .t-sub {
+            font-size: clamp(1.2rem, 2.5vw, 1.9rem);
+            font-weight: 400; opacity: .72; margin-top: .3em;
+        }
+        .t-bottom {
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+        .t-tag {
+            display: inline-block;
+            background: rgba(0,0,0,.12); border-radius: 100px;
+            padding: .32em .9em; font-size: var(--sz-label);
+            font-weight: 700; letter-spacing: .07em; margin-right: .4em;
+        }
+        .t-year {
+            font-family: var(--font-display);
+            font-size: clamp(1.5rem, 3vw, 2.5rem); opacity: .22;
+        }
+
+        /* =============================================
+           SLIDE 02 — EL PROBLEMA
+           ============================================= */
+        .s-base {
+            background: var(--bg-gradient);
+            padding: var(--pad);
+            gap: var(--gap);
+            justify-content: center;
+        }
+        .slide-header { display: flex; flex-direction: column; gap: calc(var(--gap) * .5); }
+        .slide-title {
+            font-family: var(--font-display);
+            font-size: var(--sz-title); line-height: 1.08;
+        }
+        .slide-desc { font-size: var(--sz-subtitle); color: rgba(255,255,255,.55); max-width: 60ch; }
+        .grid-3 {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: var(--gap);
+        }
+        @media (max-width: 700px) {
+            .grid-3 { grid-template-columns: 1fr; }
+        }
+
+        /* =============================================
+           SLIDE 03–04 — PRODUCT
+           ============================================= */
+        .product-tag {
+            background: var(--card-bg); color: var(--text-on-card);
+            border-radius: 100px; padding: .38em 1em;
+            font-size: var(--sz-label); font-weight: 700;
+            letter-spacing: .08em; text-transform: uppercase;
+            align-self: flex-start; white-space: nowrap;
+        }
+        .product-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            gap: var(--gap);
+        }
+        .stack-row {
+            display: flex; flex-wrap: wrap; gap: .45em;
+        }
+
+        /* =============================================
+           SLIDE 05 — FUSION
+           Full orange background
+           ============================================= */
+        .s-fusion {
+            background: var(--card-bg);
+            padding: var(--pad); gap: var(--gap);
+            color: var(--text-on-card);
+            justify-content: center;
+        }
+        .fusion-label {
+            font-size: var(--sz-label); text-transform: uppercase;
+            letter-spacing: .2em; font-weight: 600; opacity: .55;
+        }
+        .fusion-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 6.5vw, 5.5rem); line-height: .98;
+        }
+        .fusion-grid {
+            display: grid; grid-template-columns: 1fr auto 1fr;
+            gap: var(--gap); align-items: center;
+        }
+        .fusion-box {
+            background: rgba(0,0,0,.1); border-radius: 12px;
+            padding: clamp(1rem, 2vw, 1.6rem);
+        }
+        .fusion-box h3 {
+            font-family: var(--font-display);
+            font-size: clamp(0.9rem, 1.7vw, 1.15rem); margin-bottom: .3em;
+        }
+        .fusion-box p { font-size: var(--sz-body); opacity: .68; line-height: 1.5; }
+        .fusion-plus {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4.5vw, 3.5rem); opacity: .28; text-align: center;
+        }
+        .fusion-sub { font-size: var(--sz-subtitle); opacity: .68; max-width: 58ch; }
+
+        /* =============================================
+           SLIDE 06 — ARQUITECTURA
+           Two-column code layout
+           ============================================= */
+        .arch-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: var(--gap);
+        }
+        .arch-col { display: flex; flex-direction: column; gap: var(--gap); }
+        .sec-label {
+            font-size: var(--sz-label); text-transform: uppercase;
+            letter-spacing: .14em; color: var(--card-bg); font-weight: 700;
+            margin-bottom: .3em;
+        }
+        .code-block {
+            background: rgba(0,0,0,.45);
+            border: 1px solid rgba(255,255,255,.06);
+            border-left: 3px solid var(--card-bg);
+            border-radius: 8px;
+            padding: clamp(0.7rem, 1.3vw, 1.1rem);
+            font-family: 'Space Grotesk', monospace;
+            font-size: var(--sz-code);
+            line-height: 1.7; color: rgba(255,255,255,.78);
+            overflow: hidden;
+        }
+        .c-cmt  { color: rgba(255,255,255,.28); }
+        .c-key  { color: var(--accent-amber); }
+        .c-val  { color: var(--accent-green); }
+        .c-rt   { color: var(--accent-teal); }
+
+        /* =============================================
+           SLIDE 07 — CHAT TRAFFIC-AWARE
+           ============================================= */
+        .chat-demo {
+            display: flex; flex-direction: column;
+            gap: .7rem; overflow: hidden;
+            max-height: min(55vh, 400px);
+        }
+        .chat-msg { display: flex; gap: .7rem; align-items: flex-start; }
+        .chat-msg.user { flex-direction: row-reverse; }
+        .bubble {
+            background: rgba(255,255,255,.06);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: clamp(.55rem, 1.1vw, .9rem) clamp(.75rem, 1.4vw, 1.1rem);
+            font-size: var(--sz-body); max-width: 75%; line-height: 1.5;
+        }
+        .chat-msg.user .bubble {
+            background: var(--card-bg); color: var(--text-on-card); border-color: transparent;
+        }
+        .avatar {
+            width: clamp(26px, 3.5vw, 36px); height: clamp(26px, 3.5vw, 36px);
+            border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: var(--sz-label); font-weight: 700;
+            background: rgba(255,87,34,.12);
+            color: var(--card-bg); border: 1px solid rgba(255,87,34,.25);
+        }
+        .chat-msg.user .avatar {
+            background: rgba(255,255,255,.06);
+            color: rgba(255,255,255,.5); border-color: var(--border);
+        }
+        .sim-badge {
+            display: inline-flex; align-items: center; gap: .4em;
+            background: rgba(255,152,0,.12); border: 1px solid rgba(255,152,0,.3);
+            border-radius: 6px; padding: .18em .55em;
+            font-size: calc(var(--sz-label) * .92); color: var(--accent-amber);
+            font-weight: 700; margin-bottom: .4em;
+        }
+        .sim-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--accent-amber);
+            animation: pdot 1.6s ease-in-out infinite;
+        }
+        @keyframes pdot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: .3; transform: scale(.65); }
+        }
+
+        /* =============================================
+           SLIDE 08 — ROADMAP
+           6-card grid
+           ============================================= */
+        .roadmap-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: var(--gap);
+        }
+        @media (max-width: 700px) { .roadmap-grid { grid-template-columns: 1fr 1fr; } }
+        .rcard {
+            background: rgba(255,255,255,.04); border: 1px solid var(--border);
+            border-radius: 12px; padding: clamp(.7rem, 1.4vw, 1.2rem);
+            display: flex; flex-direction: column; gap: .35em;
+            transition: border-color .25s;
+        }
+        .rcard:hover { border-color: rgba(255,87,34,.4); }
+        .rphase {
+            font-size: var(--sz-label); color: var(--card-bg);
+            font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+        }
+        .rcard h3 { font-family: var(--font-display); font-size: clamp(0.95rem, 1.7vw, 1.2rem); }
+        .rcard p  { font-size: calc(var(--sz-body) * .9); color: rgba(255,255,255,.5); line-height: 1.4; }
+
+        /* =============================================
+           SLIDE 09 — DEMO FLOW
+           Step-by-step with connectors
+           ============================================= */
+        .s-demo {
+            background: var(--bg-gradient);
+            padding: var(--pad); gap: var(--gap);
+            justify-content: center;
+        }
+        .demo-steps { display: flex; flex-direction: column; gap: calc(var(--gap) * .65); }
+        .demo-step  { display: flex; align-items: center; gap: clamp(.75rem, 1.5vw, 1.5rem); }
+        .step-num {
+            width: clamp(30px, 3.8vw, 42px); height: clamp(30px, 3.8vw, 42px);
+            border-radius: 50%; background: var(--card-bg); color: var(--text-on-card);
+            font-family: var(--font-display); font-size: clamp(.75rem, 1.3vw, .95rem);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .step-connector {
+            width: 3px;
+            height: clamp(10px, 1.3vw, 18px);
+            background: rgba(255,87,34,.22);
+            margin-left: calc(clamp(30px, 3.8vw, 42px) / 2 - 1.5px);
+        }
+        .step-content h3 {
+            font-family: var(--font-display);
+            font-size: clamp(.82rem, 1.5vw, 1.1rem);
+        }
+        .step-content p {
+            font-size: calc(var(--sz-body) * .9);
+            color: rgba(255,255,255,.5);
+        }
+        .step-route {
+            font-family: 'Space Grotesk', monospace;
+            background: rgba(255,255,255,.07); padding: .12em .45em;
+            border-radius: 4px; font-size: .9em; color: var(--accent-teal);
+        }
+
+        /* =============================================
+           SLIDE 10 — SCENARIOS
+           ============================================= */
+        .scenarios-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: var(--gap);
+        }
+        @media (max-width: 700px) { .scenarios-grid { grid-template-columns: 1fr 1fr; } }
+        .scard {
+            background: rgba(255,255,255,.04); border: 1px solid var(--border);
+            border-radius: 12px; padding: clamp(.7rem, 1.4vw, 1.2rem);
+            display: flex; flex-direction: column; gap: .35em;
+            transition: all .25s var(--ease-expo);
+        }
+        .scard:hover { background: rgba(255,87,34,.07); border-color: rgba(255,87,34,.35); transform: translateY(-2px); }
+        .sc-id {
+            font-size: var(--sz-label); font-family: 'Space Grotesk', monospace;
+            color: var(--card-bg); opacity: .7; font-weight: 600;
+        }
+        .scard h3 { font-family: var(--font-display); font-size: clamp(0.95rem, 1.6vw, 1.2rem); }
+        .scard p  { font-size: calc(var(--sz-body) * .9); color: rgba(255,255,255,.48); line-height: 1.45; }
+
+        /* =============================================
+           SLIDE 11 — STACK
+           Two-column tech table
+           ============================================= */
+        .stack-split {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: clamp(1.5rem, 3vw, 3rem);
+        }
+        @media (max-width: 700px) { .stack-split { grid-template-columns: 1fr; } }
+        .stack-col { display: flex; flex-direction: column; gap: var(--gap); }
+        .stack-items { display: flex; flex-direction: column; gap: .45em; }
+        .sitem {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: .42em 0; border-bottom: 1px solid var(--border);
+        }
+        .sitem-name  { font-weight: 500; font-size: var(--sz-body); }
+        .sitem-ver   { font-size: calc(var(--sz-body) * .88); color: var(--card-bg); font-weight: 700; font-family: 'Space Grotesk', monospace; }
+
+        /* =============================================
+           SLIDE 12 — CLOSING
+           Full orange, mirror of title
+           ============================================= */
+        .s-closing {
+            background: var(--card-bg);
+            padding: var(--pad); color: var(--text-on-card);
+            justify-content: center; gap: var(--gap);
+        }
+        .c-eyebrow {
+            font-size: var(--sz-label); text-transform: uppercase;
+            letter-spacing: .2em; font-weight: 600; opacity: .55;
+        }
+        .c-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.2rem, 6vw, 5rem); line-height: 1.03;
+        }
+        .c-sub { font-size: var(--sz-subtitle); opacity: .68; max-width: 56ch; }
+        .c-links { display: flex; gap: var(--gap); flex-wrap: wrap; margin-top: calc(var(--gap) * .5); }
+        .c-link-box {
+            background: rgba(0,0,0,.1); border-radius: 12px;
+            padding: clamp(.7rem, 1.4vw, 1.2rem) clamp(.9rem, 1.8vw, 1.5rem);
+        }
+        .c-link-label {
+            font-size: var(--sz-label); font-weight: 700; letter-spacing: .1em;
+            text-transform: uppercase; opacity: .5; margin-bottom: .2em;
+        }
+        .c-link-val { font-size: var(--sz-body); opacity: .75; }
+        .c-bottom {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-top: auto;
+        }
+        .c-brand {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3.2rem); opacity: .18;
+        }
+        .c-expo-tag {
+            font-size: var(--sz-label); letter-spacing: .15em;
+            text-transform: uppercase; opacity: .45; font-weight: 600;
+        }
+
+        /* =============================================
+           INLINE EDITING
+           Hotzone top-left corner → toggle button appears
+           Uses JS hover + 400ms grace (NOT CSS ~ selector)
+           ============================================= */
+        .edit-hotzone {
+            position: fixed; top: 0; left: 0;
+            width: 80px; height: 80px;
+            z-index: 10000; cursor: pointer;
+        }
+        #editToggle {
+            position: fixed; top: .9rem; left: .9rem;
+            background: rgba(18,18,18,.92);
+            color: #fff; border: 1px solid rgba(255,255,255,.15);
+            border-radius: 8px; padding: .38em .8em;
+            font-size: .72rem; font-family: var(--font-body);
+            cursor: pointer; z-index: 10001;
+            opacity: 0; pointer-events: none;
+            transition: opacity .25s ease;
+            display: flex; align-items: center; gap: .38em;
+        }
+        #editToggle.show, #editToggle.active { opacity: 1; pointer-events: auto; }
+        #editToggle.active { background: var(--card-bg); color: var(--text-on-card); border-color: transparent; }
+
+        [contenteditable="true"] {
+            outline: 2px dashed rgba(255,87,34,.55);
+            border-radius: 3px; cursor: text; min-height: 1em;
+        }
+        #editIndicator {
+            position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+            background: rgba(255,87,34,.92); color: var(--text-on-card);
+            font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+            text-transform: uppercase; padding: .38em 1em; border-radius: 100px;
+            z-index: 10000; opacity: 0; pointer-events: none; transition: opacity .3s;
+        }
+        #editIndicator.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div class="progress-bar" id="progressBar" style="width: 100%;"></div>
+
+<!-- Nav dots (generated by JS) -->
+<nav class="nav-dots" id="navDots" aria-label="Navegación de diapositivas"><button class="nav-dot" aria-label="Ir a diapositiva 1"></button><button class="nav-dot" aria-label="Ir a diapositiva 2"></button><button class="nav-dot" aria-label="Ir a diapositiva 3"></button><button class="nav-dot" aria-label="Ir a diapositiva 4"></button><button class="nav-dot" aria-label="Ir a diapositiva 5"></button><button class="nav-dot" aria-label="Ir a diapositiva 6"></button><button class="nav-dot" aria-label="Ir a diapositiva 7"></button><button class="nav-dot" aria-label="Ir a diapositiva 8"></button><button class="nav-dot" aria-label="Ir a diapositiva 9"></button><button class="nav-dot" aria-label="Ir a diapositiva 10"></button><button class="nav-dot" aria-label="Ir a diapositiva 11"></button><button class="nav-dot active" aria-label="Ir a diapositiva 12"></button><button class="nav-dot" aria-label="Ir a diapositiva 1"></button><button class="nav-dot" aria-label="Ir a diapositiva 2"></button><button class="nav-dot" aria-label="Ir a diapositiva 3"></button><button class="nav-dot" aria-label="Ir a diapositiva 4"></button><button class="nav-dot" aria-label="Ir a diapositiva 5"></button><button class="nav-dot" aria-label="Ir a diapositiva 6"></button><button class="nav-dot" aria-label="Ir a diapositiva 7"></button><button class="nav-dot" aria-label="Ir a diapositiva 8"></button><button class="nav-dot" aria-label="Ir a diapositiva 9"></button><button class="nav-dot" aria-label="Ir a diapositiva 10"></button><button class="nav-dot" aria-label="Ir a diapositiva 11"></button><button class="nav-dot" aria-label="Ir a diapositiva 12"></button></nav>
+
+<!-- Inline editing controls -->
+<div class="edit-hotzone" id="editHotzone"></div>
+<button id="editToggle" aria-label="Modo edición (E)" class="show">✏️ Edit</button>
+<div id="editIndicator" class="">MODO EDICIÓN — Haz clic en texto para editar · Ctrl+S para guardar</div>
+
+
+<!-- ============================================================
+     SLIDE 01 — TITLE
+     Bold orange card fills the slide. Ghost "01" watermark.
+     ============================================================ -->
+<section class="slide s-title visible" aria-label="Portada">
+    <div class="slide-label reveal d1">TYR ai <span class="crumb">/ Inicio</span></div>
+    <div class="title-card reveal-scale d2">
+        <div class="slide-num on-orange">01</div>
+
+        <div class="t-eyebrow reveal d2" contenteditable="false">Expo Logística Panamá 2026</div>
+
+        <div>
+            <div class="t-main reveal d3" contenteditable="false"><div>TYR AI</div></div>
+            <div class="t-sub reveal d4" contenteditable="false">Logistics OS × Gemelo Centenario</div>
+        </div>
+
+        <div class="t-bottom reveal d5">
+            <div>
+                <span class="t-tag" contenteditable="false">AI Copilot</span>
+                <span class="t-tag" contenteditable="false">Digital Twin</span>
+                <span class="t-tag" contenteditable="false">Real-time</span>
+            </div>
+            <div class="t-year">2026</div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 02 — EL PROBLEMA
+     3 pain-point cards on dark background
+     ============================================================ -->
+<section class="slide s-base visible" aria-label="El problema">
+    <div class="slide-num">02</div>
+    <div class="slide-label reveal d1">TYR ai <span class="crumb">/ Problema</span></div>
+
+    <div class="slide-header">
+        <div class="accent-line reveal d1"></div>
+        <h2 class="slide-title reveal d2" contenteditable="false">La cadena logística opera<br>ciega ante su propio corredor</h2>
+    </div>
+
+    <div class="grid-3">
+        <div class="card reveal d3">
+            <div class="clabel" contenteditable="false">01 — Desconexión</div>
+            <h3 contenteditable="false">Sin conciencia situacional</h3>
+            <p contenteditable="false">Los sistemas de gestión no conocen el estado de tráfico de la Vía Centenario en tiempo real.</p>
+        </div>
+        <div class="card reveal d4">
+            <div class="clabel" contenteditable="false">02 — Reactividad</div>
+            <h3 contenteditable="false">Incidentes descubiertos tarde</h3>
+            <p contenteditable="false">Accidentes, construcción y horas pico se descubren cuando la carga ya está en ruta.</p>
+        </div>
+        <div class="card reveal d5">
+            <div class="clabel" contenteditable="false">03 — Limitación</div>
+            <h3 contenteditable="false">El copiloto AI opera a ciegas</h3>
+            <p contenteditable="false">Las recomendaciones del asistentes de ahora no predicen ni simulan, solo muestran datos ya existentes.</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 03 — TYR LOGISTICS OS
+     Product overview: 3 feature cards + stack pills
+     ============================================================ -->
+<section class="slide s-base visible" style="gap: var(--gap);" aria-label="TYR Logistics OS">
+    <div class="slide-num">03</div>
+    <div class="slide-label reveal d1">TYR ai <span class="crumb">/ TYR OS</span></div>
+
+    <div class="product-header">
+        <div>
+            <div class="accent-line reveal d1"></div>
+            <h2 class="slide-title reveal d2" contenteditable="false">TRABAJA con TYR AI</h2>
+            <p class="slide-desc reveal d3" contenteditable="false">AI copilot para gestión de embarques — chat inteligente, pipeline visual y KPIs en tiempo real.</p>
+        </div>
+        <span class="product-tag reveal d2">Proyecto 01</span>
+    </div>
+
+    <div class="grid-3">
+        <div class="card reveal d3">
+            <div class="clabel" contenteditable="false">Chat</div>
+            <h3 contenteditable="false">Basado en ultima tecnología de IA agéntica</h3>
+            <p contenteditable="false">Consultas en lenguaje natural sobre embarques, rutas, y envios. Trabaja más rápido y efectivamente.</p>
+        </div>
+        <div class="card reveal d4">
+            <div class="clabel" contenteditable="false">Pipeline</div>
+            <h3 contenteditable="false">Kanban con dnd-kit</h3>
+            <p contenteditable="false">Framework de manipulación y flow de datos intuitivo, accesible, y atractivo.</p>
+        </div>
+        <div class="card reveal d5">
+            <div class="clabel" contenteditable="false">Datos</div>
+            <h3 contenteditable="false">NER + Knowledge Base</h3>
+            <p contenteditable="false">Extracción de entidades automatica: PUERTO, BL, CONTENEDOR, RUTA. Base de conocimiento en JSON + FastAPI.</p>
+        </div>
+    </div>
+
+    <div class="stack-row reveal d6">
+        <span class="pill">React 19</span>
+        <span class="pill">TypeScript strict</span>
+        <span class="pill">Tailwind 4</span>
+        <span class="pill">Vite 7</span>
+        <span class="pill">FastAPI 0.115</span>
+        <span class="pill">Groq</span>
+        <span class="pill">Zustand 5</span>
+        <span class="pill">dnd-kit</span>
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 04 — GEMELO CENTENARIO
+     Digital twin overview: 3 feature cards + stack pills
+     ============================================================ -->
+<section class="slide s-base visible" style="gap: var(--gap);" aria-label="Gemelo Centenario">
+    <div class="slide-num">04</div>
+    <div class="slide-label reveal d1">TYR ai <span class="crumb">/ Gemelo</span></div>
+
+    <div class="product-header">
+        <div>
+            <div class="accent-line reveal d1"></div>
+            <h2 class="slide-title reveal d2" contenteditable="false">Gemelo Digital - Centenario</h2>
+            <p class="slide-desc reveal d3" contenteditable="false">Digital twin en tiempo real de la Vía Centenario — vehículos animados, multiples escenarios y KPIs del corredor en tiempo real.</p>
+        </div>
+        <span class="product-tag reveal d2">Proyecto 02</span>
+    </div>
+
+    <div class="grid-3">
+        <div class="card reveal d3">
+            <div class="clabel" contenteditable="false">Simulación</div>
+            <h3 contenteditable="false">Vehículos variados en tiempo real</h3>
+            <p contenteditable="false">1 seg real = 60 min simulados.&nbsp; Predice y juega con las variables que afectan tu linea de transporte.</p>
+        </div>
+        <div class="card reveal d4">
+            <div class="clabel" contenteditable="false">Escenarios</div>
+            <h3 contenteditable="false">Escenarios inteligentes</h3>
+            <p contenteditable="false">TYR AI evalua con data de sensores IoT el estado actual de la Via Centenario sin que tengas que estar ahi.</p>
+        </div>
+        <div class="card reveal d5">
+            <div class="clabel" contenteditable="false">Mapa</div>
+            <h3 contenteditable="false">MapLibre GL + react-map-gl</h3>
+            <p contenteditable="false">Renderizado 3D en tiempo real. Trabaja con una copia digital precisa e intuitiva.</p>
+        </div>
+    </div>
+
+    <div class="stack-row reveal d6">
+        <span class="pill">React 18</span>
+        <span class="pill">MapLibre GL</span>
+        <span class="pill">react-map-gl</span>
+        <span class="pill">Recharts</span>
+        <span class="pill">react-i18next</span>
+        <span class="pill">Sin backend</span>
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 05 — LA FUSIÓN
+     Full orange background: mirrors title slide energy
+     ============================================================ -->
+<section class="slide s-fusion visible" aria-label="La fusión">
+    <div class="slide-num on-orange">05</div>
+    <div class="slide-label on-orange reveal d1">TYR ai <span class="crumb">/ Fusión</span></div>
+
+    <div class="fusion-label reveal d1" contenteditable="false">El concepto central</div>
+    <h2 class="fusion-title reveal d2" contenteditable="false">Un producto.<br>Dos superpoderes.</h2>
+
+    <div class="fusion-grid reveal d3">
+        <div class="fusion-box">
+            <h3 contenteditable="false">TYR Logistics OS</h3>
+            <p contenteditable="false">Shell exterior — Navbar, Sidebar, ChatWidget, Zustand stores. El cerebro de gestión de embarques.</p>
+        </div>
+        <div class="fusion-plus">×</div>
+        <div class="fusion-box">
+            <h3 contenteditable="false">Gemelo Centenario</h3>
+            <p contenteditable="false">Nueva ruta <code style="background:rgba(0,0,0,.15);padding:.1em .3em;border-radius:3px;">/twin</code> — useSimulation + TwinMap portados al router de TYR.</p>
+        </div>
+    </div>
+
+    <p class="fusion-sub reveal d4" contenteditable="false">
+        El asistente AI gana conciencia situacional del corredor. El chat puede responder:
+        <em>"¿Hay tráfico en Vía Centenario ahora?"</em> — y cambiar el escenario desde la conversación.
+    </p>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 06 — SIMULA HASTA EL DETALLE MÁS PEQUEÑO
+     Scene 3: Conflict — 3 scenario cards, human language only
+     ============================================================ -->
+<section class="slide s-base visible" aria-label="Simula hasta el detalle más pequeño">
+    <div class="slide-num">06</div>
+    <div class="slide-label reveal d1">TYR ai <span class="crumb">/ Simula</span></div>
+
+    <div class="slide-header">
+        <div class="accent-line reveal d1"></div>
+        <h2 class="slide-title reveal d2" contenteditable="false">Simula hasta el detalle<br>más pequeño.</h2>
+        <p class="slide-desc reveal d3" contenteditable="false">Antes de que ocurra en la realidad, ya lo viste en TYR ai.</p>
+    </div>
+
+    <div class="grid-3">
+        <div class="card reveal d3">
+            <div class="clabel" contenteditable="false">Accidente en la Vía</div>
+            <h3 contenteditable="false">Velocidad cae a 18 km/h.</h3>
+            <p contenteditable="false">Congestión máxima en el tramo central. TYR lo ve primero. Tu carga ya tiene un plan B.</p>
+        </div>
+        <div class="card reveal d4">
+            <div class="clabel" contenteditable="false">Lluvia Intensa</div>
+            <h3 contenteditable="false">Carga reducida. Salida reprogramada.</h3>
+            <p contenteditable="false">El asistente ajusta la recomendación de carga y propone una nueva ventana de salida. Sin sorpresas.</p>
+        </div>
+        <div class="card reveal d5">
+            <div class="clabel" contenteditable="false">Hora Pico</div>
+            <h3 contenteditable="false">El corredor al límite.</h3>
+            <p contenteditable="false">El plan ya está ajustado antes de que el camión salga. Llegas a tiempo porque lo viste venir.</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 07 — TU CORREDOR. EN TIEMPO REAL.
+     Scene 3 continued — split: benefits left, live map viz right
+     ============================================================ -->
+<section class="slide s-base visible" aria-label="Tu corredor en tiempo real">
+    <div class="slide-num">07</div>
+    <div class="slide-label reveal d1">TYR ai <span class="crumb">/ Corredor</span></div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(2rem,5vw,5rem); align-items:center;">
+
+        <div style="display:flex; flex-direction:column; gap:var(--gap);">
+            <div class="accent-line reveal d1"></div>
+            <h2 class="slide-title reveal d2" contenteditable="false">Tu corredor.<br>En tiempo real.</h2>
+            <div style="display:flex; flex-direction:column; gap:calc(var(--gap)*1.1); margin-top:calc(var(--gap)*0.5);">
+                <div class="reveal d3" style="display:flex; align-items:center; gap:1em;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:var(--card-bg);flex-shrink:0;box-shadow:0 0 8px rgba(255,87,34,.5);"></div>
+                    <span style="font-size:var(--sz-subtitle); color:rgba(255,255,255,.85);">Tráfico actualizado cada 100ms</span>
+                </div>
+                <div class="reveal d4" style="display:flex; align-items:center; gap:1em;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:var(--card-bg);flex-shrink:0;box-shadow:0 0 8px rgba(255,87,34,.5);"></div>
+                    <span style="font-size:var(--sz-subtitle); color:rgba(255,255,255,.85);">Escenarios activables con un clic</span>
+                </div>
+                <div class="reveal d5" style="display:flex; align-items:center; gap:1em;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:var(--card-bg);flex-shrink:0;box-shadow:0 0 8px rgba(255,87,34,.5);"></div>
+                    <span style="font-size:var(--sz-subtitle); color:rgba(255,255,255,.85);">Congestión visible antes de salir</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CSS-only live corridor visualization -->
+        <div class="reveal-scale d3" style="position:relative; height:clamp(180px,32vh,300px); background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+            <!-- Corridor path line -->
+            <div style="position:absolute; top:50%; left:0; right:0; height:2px; background:linear-gradient(90deg, transparent 0%, rgba(255,87,34,.25) 10%, rgba(255,87,34,.55) 50%, rgba(255,87,34,.25) 90%, transparent 100%); transform:translateY(-50%);"></div>
+            <!-- Vehicle dots — pulsing at different positions to suggest movement -->
+            <div style="position:absolute;top:calc(50% - 5px);left:12%;width:10px;height:10px;border-radius:50%;background:var(--card-bg);box-shadow:0 0 8px rgba(255,87,34,.7);animation:pdot 1.8s ease-in-out infinite;animation-delay:0s;"></div>
+            <div style="position:absolute;top:calc(50% - 4px);left:28%;width:8px;height:8px;border-radius:50%;background:var(--card-bg);opacity:.8;animation:pdot 1.8s ease-in-out infinite;animation-delay:.3s;"></div>
+            <div style="position:absolute;top:calc(50% - 4px);left:42%;width:8px;height:8px;border-radius:50%;background:var(--accent-teal);opacity:.7;animation:pdot 2.1s ease-in-out infinite;animation-delay:.6s;"></div>
+            <!-- Incident pulse — red warning in the middle -->
+            <div style="position:absolute;top:calc(50% - 7px);left:57%;width:14px;height:14px;border-radius:50%;background:#EF5350;box-shadow:0 0 0 6px rgba(239,83,80,.2),0 0 14px rgba(239,83,80,.5);animation:pdot 1s ease-in-out infinite;"></div>
+            <div style="position:absolute;top:calc(50% - 4px);left:74%;width:8px;height:8px;border-radius:50%;background:var(--accent-teal);opacity:.75;animation:pdot 2.4s ease-in-out infinite;animation-delay:.9s;"></div>
+            <div style="position:absolute;top:calc(50% - 4px);left:86%;width:8px;height:8px;border-radius:50%;background:var(--card-bg);opacity:.8;animation:pdot 1.8s ease-in-out infinite;animation-delay:1.2s;"></div>
+            <!-- Origin + destination markers -->
+            <div style="position:absolute;top:50%;left:4%;transform:translate(-50%,-50%);font-size:var(--sz-label);color:rgba(255,255,255,.35);font-family:var(--font-body);letter-spacing:.08em;">PCN</div>
+            <div style="position:absolute;top:50%;right:4%;transform:translate(50%,-50%);font-size:var(--sz-label);color:rgba(255,255,255,.35);font-family:var(--font-body);letter-spacing:.08em;">PTY</div>
+            <!-- Live label -->
+            <div style="position:absolute;bottom:.75rem;right:1rem;font-size:var(--sz-label);color:rgba(255,255,255,.28);letter-spacing:.12em;text-transform:uppercase;font-family:var(--font-body);display:flex;align-items:center;gap:.4em;"><span style="width:5px;height:5px;border-radius:50%;background:#EF5350;display:inline-block;animation:pdot 1s infinite;"></span>Vía Centenario · Live</div>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 08 — 10X SU POTENCIAL CON FEEDBACK PERFECTO
+     Scene 4: Solution — clean 2-turn chat, no technical notes
+     ============================================================ -->
+<section class="slide s-base visible" aria-label="10x su potencial con feedback perfecto">
+    <div class="slide-num">08</div>
+    <div class="slide-label reveal d1">TYR ai <span class="crumb">/ Demo</span></div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(2rem,5vw,5rem); align-items:center;">
+
+        <div style="display:flex; flex-direction:column; gap:var(--gap);">
+            <div class="accent-line reveal d1"></div>
+            <h2 class="slide-title reveal d2" contenteditable="false">10x su potencial<br>con feedback perfecto.</h2>
+            <p class="slide-desc reveal d3" style="color:rgba(255,255,255,.55);" contenteditable="false">
+                Tu asistente AI conoce el corredor en tiempo real. Pregunta en lenguaje natural y actúa con confianza.
+            </p>
+        </div>
+
+        <div class="reveal d3" style="display:flex; flex-direction:column; gap:.8rem;">
+            <div class="chat-msg user">
+                <div class="avatar" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border-color:var(--border);">U</div>
+                <div class="bubble" contenteditable="false">¿Qué carga recomiendas con lluvia intensa?</div>
+            </div>
+            <div class="chat-msg">
+                <div class="avatar">TYR</div>
+                <div class="bubble" contenteditable="false">
+                    Con lluvia activa, reduce la carga al <strong>80%</strong> y programa la salida a las <strong>14:00</strong>. El corredor mejora en 30 minutos y llegas sin contratiempos.
+                </div>
+            </div>
+            <p style="font-size:var(--sz-label);color:var(--text-muted);font-style:italic;padding-left:.5rem;" contenteditable="false">Powered by Grok · Respuesta instantánea</p>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 09 — Y RECIBE GRANDES RESULTADOS
+     Scene 5: Impact — 3 big KPI stat cards
+     ============================================================ -->
+<section class="slide s-base visible" aria-label="Y recibe grandes resultados">
+    <div class="slide-num">09</div>
+    <div class="slide-label reveal d1">TYR ai <span class="crumb">/ Resultados</span></div>
+
+    <div class="slide-header">
+        <div class="accent-line reveal d1"></div>
+        <h2 class="slide-title reveal d2" contenteditable="false">Y recibe grandes resultados.</h2>
+    </div>
+
+    <div class="grid-3">
+        <div class="card reveal d3" style="text-align:center; padding:clamp(1.5rem,3vw,3rem) clamp(1rem,2vw,2rem);">
+            <div style="font-family:var(--font-display); font-size:clamp(3rem,7vw,5.5rem); color:var(--card-bg); line-height:1; margin-bottom:.2em;">-47%</div>
+            <div class="clabel" style="margin-bottom:.5em;" contenteditable="false">Tiempos de espera</div>
+            <p contenteditable="false">Menos tiempo perdido por incidentes imprevistos en el corredor.</p>
+        </div>
+        <div class="card reveal d4" style="text-align:center; padding:clamp(1.5rem,3vw,3rem) clamp(1rem,2vw,2rem);">
+            <div style="font-family:var(--font-display); font-size:clamp(3rem,7vw,5.5rem); color:var(--card-bg); line-height:1; margin-bottom:.2em;">10x</div>
+            <div class="clabel" style="margin-bottom:.5em;" contenteditable="false">Velocidad de decisión</div>
+            <p contenteditable="false">Decisiones de ruta y carga en segundos, no en horas de análisis.</p>
+        </div>
+        <div class="card reveal d5" style="text-align:center; padding:clamp(1.5rem,3vw,3rem) clamp(1rem,2vw,2rem);">
+            <div style="font-family:var(--font-display); font-size:clamp(3rem,7vw,5.5rem); color:var(--card-bg); line-height:1; margin-bottom:.2em;">0</div>
+            <div class="clabel" style="margin-bottom:.5em;" contenteditable="false">Sorpresas en la ruta</div>
+            <p contenteditable="false">El corredor ya no tiene secretos. Llegas siempre con un plan.</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 10 — ASÍ DE SIMPLE
+     Scene 5 continued — 3-step horizontal flow, no tech jargon
+     ============================================================ -->
+<section class="slide s-demo visible" aria-label="Así de simple">
+    <div class="slide-num">10</div>
+    <div class="slide-label reveal d1">TYR ai <span class="crumb">/ Cómo</span></div>
+
+    <div style="display:flex; flex-direction:column; gap:var(--gap);">
+        <div>
+            <div class="accent-line reveal d1"></div>
+            <h2 class="slide-title reveal d2" contenteditable="false">Así de simple.</h2>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:clamp(.75rem,2vw,2rem);" class="reveal d3">
+
+            <div class="card" style="text-align:center; padding:clamp(1.5rem,3vw,3rem) clamp(1rem,2vw,2rem);">
+                <div class="step-num" style="margin:0 auto clamp(.75rem,1.5vw,1.5rem); width:clamp(40px,5vw,56px); height:clamp(40px,5vw,56px); font-size:clamp(.9rem,1.5vw,1.1rem);">1</div>
+                <h3 style="font-family:var(--font-display); font-size:clamp(1.2rem,2.5vw,2rem); margin-bottom:.4em;" contenteditable="false">Ve</h3>
+                <p contenteditable="false">El corredor de Panamá en vivo, con cada vehículo en su posición real.</p>
+            </div>
+
+            <div style="width:clamp(24px,3vw,40px); height:2px; background:rgba(255,87,34,.3);"></div>
+
+            <div class="card" style="text-align:center; padding:clamp(1.5rem,3vw,3rem) clamp(1rem,2vw,2rem);">
+                <div class="step-num" style="margin:0 auto clamp(.75rem,1.5vw,1.5rem); width:clamp(40px,5vw,56px); height:clamp(40px,5vw,56px); font-size:clamp(.9rem,1.5vw,1.1rem);">2</div>
+                <h3 style="font-family:var(--font-display); font-size:clamp(1.2rem,2.5vw,2rem); margin-bottom:.4em;" contenteditable="false">Simula</h3>
+                <p contenteditable="false">Activa el escenario que quieres prever. Accidente, lluvia, hora pico — con un clic.</p>
+            </div>
+
+            <div style="width:clamp(24px,3vw,40px); height:2px; background:rgba(255,87,34,.3);"></div>
+
+            <div class="card" style="text-align:center; padding:clamp(1.5rem,3vw,3rem) clamp(1rem,2vw,2rem);">
+                <div class="step-num" style="margin:0 auto clamp(.75rem,1.5vw,1.5rem); width:clamp(40px,5vw,56px); height:clamp(40px,5vw,56px); font-size:clamp(.9rem,1.5vw,1.1rem);">3</div>
+                <h3 style="font-family:var(--font-display); font-size:clamp(1.2rem,2.5vw,2rem); margin-bottom:.4em;" contenteditable="false">Decide</h3>
+                <p contenteditable="false">Con datos reales, en segundos. TYR ai ya tiene la respuesta lista para ti.</p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 11 — DALE SUPERPODERES A TU RED LOGÍSTICA
+     Scene 6 pre-CTA — full orange, emotional
+     ============================================================ -->
+<section class="slide s-fusion visible" aria-label="Dale superpoderes a tu red logística">
+    <div class="slide-num on-orange">11</div>
+    <div class="slide-label on-orange reveal d1">TYR ai <span class="crumb">/ Visión</span></div>
+
+    <div class="fusion-label reveal d1" contenteditable="false">TYR ai · Logistics OS × Gemelo Centenario</div>
+    <h2 class="fusion-title reveal d2" contenteditable="false">Dale superpoderes<br>a tu red logística.</h2>
+
+    <div style="display:flex; flex-direction:column; gap:var(--gap); margin-top:calc(var(--gap)*.5);">
+        <div class="reveal d3" style="display:flex; align-items:center; gap:1em;">
+            <div style="width:3px; height:clamp(24px,3vw,36px); background:rgba(0,0,0,.25); border-radius:2px; flex-shrink:0;"></div>
+            <p class="fusion-sub" style="font-size:var(--sz-subtitle); opacity:.75; max-width:none;" contenteditable="false">Tu asistente AI ya conoce la Vía Centenario.</p>
+        </div>
+        <div class="reveal d4" style="display:flex; align-items:center; gap:1em;">
+            <div style="width:3px; height:clamp(24px,3vw,36px); background:rgba(0,0,0,.25); border-radius:2px; flex-shrink:0;"></div>
+            <p class="fusion-sub" style="font-size:var(--sz-subtitle); opacity:.75; max-width:none;" contenteditable="false">El mapa y el chat, en una sola plataforma.</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- ============================================================
+     SLIDE 12 — DESBLOQUEA NUEVOS CONOCIMIENTOS
+     Scene 6: CTA — full orange closing
+     ============================================================ -->
+<section class="slide s-closing visible" aria-label="Cierre">
+    <div class="slide-num on-orange">12</div>
+    <div class="slide-label on-orange reveal d1">TYR ai <span class="crumb">/ Fin</span></div>
+
+    <div class="c-eyebrow reveal d1" contenteditable="false">Expo Logística Panamá 2026</div>
+    <h2 class="c-title reveal d2" contenteditable="false">Desbloquea nuevos<br>conocimientos y perfecciona<br>con TYR AI.</h2>
+    <p class="c-sub reveal d3" contenteditable="false">
+        Ve el corredor. Simula el escenario. Decide con confianza.
+    </p>
+
+    <div class="c-bottom reveal d4">
+        <div class="c-brand">TYR ai</div>
+        <div class="c-expo-tag">Expo Logística Panamá · 2026</div>
+    </div>
+</section>
+
+
+<script>
+/* ============================================================
+   SLIDE PRESENTATION CONTROLLER
+   Handles: keyboard nav, touch/swipe, wheel, progress bar, dots
+   ============================================================ */
+class SlidePresentation {
+    constructor() {
+        this.slides     = Array.from(document.querySelectorAll('.slide'));
+        this.total      = this.slides.length;
+        this.current    = 0;
+
+        this.initObserver();
+        this.initKeyboard();
+        this.initTouch();
+        this.initWheel();
+        this.buildDots();
+        this.updateProgress(0);
+
+        // Trigger entrance animations on first slide
+        setTimeout(() => this.slides[0].classList.add('visible'), 80);
+    }
+
+    /* Add .visible when a slide is ≥50% in viewport */
+    initObserver() {
+        const obs = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.intersectionRatio >= 0.5) {
+                    e.target.classList.add('visible');
+                    const i = this.slides.indexOf(e.target);
+                    if (i !== -1) {
+                        this.current = i;
+                        this.updateDots(i);
+                        this.updateProgress(i);
+                    }
+                }
+            });
+        }, { threshold: 0.5 });
+
+        this.slides.forEach(s => obs.observe(s));
+    }
+
+    /* Arrow keys, Space, Page, Home/End */
+    initKeyboard() {
+        document.addEventListener('keydown', e => {
+            if (e.target.getAttribute('contenteditable')) return;
+            const fwd  = ['ArrowDown', 'ArrowRight', ' ', 'PageDown'];
+            const back = ['ArrowUp',   'ArrowLeft',        'PageUp'];
+
+            if (fwd.includes(e.key))      { e.preventDefault(); this.go(this.current + 1); }
+            else if (back.includes(e.key)){ e.preventDefault(); this.go(this.current - 1); }
+            else if (e.key === 'Home')    { e.preventDefault(); this.go(0); }
+            else if (e.key === 'End')     { e.preventDefault(); this.go(this.total - 1); }
+        });
+    }
+
+    /* Touch swipe */
+    initTouch() {
+        let sy = 0, sx = 0;
+        document.addEventListener('touchstart', e => { sy = e.touches[0].clientY; sx = e.touches[0].clientX; }, { passive: true });
+        document.addEventListener('touchend', e => {
+            const dy = sy - e.changedTouches[0].clientY;
+            const dx = sx - e.changedTouches[0].clientX;
+            if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 45)
+                this.go(this.current + (dy > 0 ? 1 : -1));
+        }, { passive: true });
+    }
+
+    /* Mouse wheel — throttled to 1 navigate per 800ms */
+    initWheel() {
+        let last = 0;
+        document.addEventListener('wheel', e => {
+            const now = Date.now();
+            if (now - last < 800 || Math.abs(e.deltaY) < 20) return;
+            last = now;
+            this.go(this.current + (e.deltaY > 0 ? 1 : -1));
+        }, { passive: true });
+    }
+
+    /* Navigate to index */
+    go(i) {
+        const t = Math.max(0, Math.min(i, this.total - 1));
+        if (t === this.current) return;
+        this.slides[t].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        this.current = t;
+        this.updateDots(t);
+        this.updateProgress(t);
+    }
+
+    /* Build nav dots from slides array */
+    buildDots() {
+        const nav = document.getElementById('navDots');
+        if (!nav) return;
+        this.slides.forEach((_, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'nav-dot' + (i === 0 ? ' active' : '');
+            btn.setAttribute('aria-label', `Ir a diapositiva ${i + 1}`);
+            btn.addEventListener('click', () => this.go(i));
+            nav.appendChild(btn);
+        });
+    }
+    updateDots(active) {
+        document.querySelectorAll('.nav-dot').forEach((d, i) =>
+            d.classList.toggle('active', i === active));
+    }
+
+    /* Progress bar */
+    updateProgress(i) {
+        const bar = document.getElementById('progressBar');
+        if (bar) bar.style.width = (this.total > 1 ? (i / (this.total - 1)) * 100 : 100) + '%';
+    }
+}
+
+
+/* ============================================================
+   INLINE EDITOR
+   Hover top-left corner (or press E) to show edit button.
+   Click any text element to edit. Ctrl+S saves + exports file.
+   Uses JS hover with 400ms grace — NOT CSS ~ selector
+   (pointer-events:none on toggle breaks CSS-only hover chain).
+   ============================================================ */
+class InlineEditor {
+    constructor() {
+        this.isActive   = false;
+        this.storageKey = 'tyr-slides-edits';
+        this._hideTimer = null;
+
+        this.toggle   = document.getElementById('editToggle');
+        this.hotzone  = document.getElementById('editHotzone');
+        this.indicator = document.getElementById('editIndicator');
+
+        this.initHotzone();
+        this.loadEdits();
+    }
+
+    /* Hotzone hover with 400ms grace period */
+    initHotzone() {
+        const show = () => { clearTimeout(this._hideTimer); this.toggle.classList.add('show'); };
+        const hide = () => {
+            this._hideTimer = setTimeout(() => {
+                if (!this.isActive) this.toggle.classList.remove('show');
+            }, 400);
+        };
+
+        this.hotzone.addEventListener('mouseenter', show);
+        this.hotzone.addEventListener('mouseleave', hide);
+        this.toggle.addEventListener('mouseenter',  () => clearTimeout(this._hideTimer));
+        this.toggle.addEventListener('mouseleave',  hide);
+
+        this.hotzone.addEventListener('click', () => this.flipMode());
+        this.toggle.addEventListener('click',  () => this.flipMode());
+
+        document.addEventListener('keydown', e => {
+            if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable'))
+                this.flipMode();
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (this.isActive) { this.persist(); this.exportFile(); }
+            }
+        });
+    }
+
+    /* Toggle edit mode on/off */
+    flipMode() {
+        this.isActive = !this.isActive;
+        this.toggle.classList.toggle('active', this.isActive);
+        this.toggle.classList.add('show');
+        this.toggle.textContent = this.isActive ? '💾 Guardar' : '✏️ Edit';
+        this.indicator.classList.toggle('show', this.isActive);
+
+        // Make relevant text elements editable
+        document.querySelectorAll(
+            '.slide h1,.slide h2,.slide h3,.slide p,.slide .clabel,.slide .rphase,.slide .sc-id,' +
+            '.slide .t-eyebrow,.slide .t-main,.slide .t-sub,.slide .t-tag,' +
+            '.slide .fusion-label,.slide .fusion-title,.slide .fusion-sub,' +
+            '.slide .c-eyebrow,.slide .c-title,.slide .c-sub,.slide .c-link-label,.slide .c-link-val,' +
+            '.slide .step-content h3,.slide .step-content p,.slide .bubble,.slide .sec-label'
+        ).forEach(el => {
+            el.contentEditable = this.isActive ? 'true' : 'false';
+        });
+
+        if (!this.isActive) { this.persist(); this.exportFile(); }
+    }
+
+    /* Stable identity: tag + nth-child path from body */
+    getPath(el) {
+        let path = '', node = el;
+        while (node && node !== document.body) {
+            const idx = Array.from(node.parentNode?.children || []).indexOf(node);
+            path = `${node.tagName}[${idx}]/${path}`;
+            node = node.parentNode;
+        }
+        return path;
+    }
+
+    /* Save all editable content to localStorage */
+    persist() {
+        const items = [];
+        document.querySelectorAll('[contenteditable]').forEach(el => {
+            items.push({ path: this.getPath(el), html: el.innerHTML });
+        });
+        try { localStorage.setItem(this.storageKey, JSON.stringify(items)); } catch (_) {}
+    }
+
+    /* Restore saved edits on page load */
+    loadEdits() {
+        try {
+            const saved = localStorage.getItem(this.storageKey);
+            if (!saved) return;
+            const items = JSON.parse(saved);
+            const all = Array.from(document.querySelectorAll(
+                '.slide h1,.slide h2,.slide h3,.slide p,.slide .clabel,.slide .rphase,.slide .sc-id,' +
+                '.slide .t-eyebrow,.slide .t-main,.slide .t-sub,.slide .t-tag,' +
+                '.slide .fusion-label,.slide .fusion-title,.slide .fusion-sub,' +
+                '.slide .c-eyebrow,.slide .c-title,.slide .c-sub'
+            ));
+            items.forEach(item => {
+                const el = all.find(e => this.getPath(e) === item.path);
+                if (el) el.innerHTML = item.html;
+            });
+        } catch (_) {}
+    }
+
+    /* Download the current HTML as a file */
+    exportFile() {
+        try {
+            const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'tyr-ai-presentacion.html';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        } catch (_) {}
+    }
+}
+
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    new SlidePresentation();
+    new InlineEditor();
+});
+</script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+
+
+</body></html>
