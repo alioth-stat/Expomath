@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TYR AI: Urban Digital Twin & ML Deep Dive</title>
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #080808;
+      --grad: linear-gradient(135deg, #080808 0%, #161616 50%, #0c0c0c 100%);
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text: #f0f0f0;
+      --muted: rgba(255,255,255,0.40);
+      --accent: #00d4ff;
+      --accent2: #7c7c7c;
+      --ease-expo: cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--grad);
+      color: var(--text);
+      line-height: 1.6;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Black gradient background overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background-image: url('BLACK-GRADIENTS.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.45;
+    }
+
+    /* Grain texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/><feColorMatrix type='saturate' values='0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+      background-size: 200px 200px;
+      opacity: 0.06;
+    }
+
+    /* Progress bar */
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 3px;
+      background: var(--accent);
+      z-index: 10001;
+      transition: width 0.3s var(--ease-expo);
+    }
+
+    /* Navigation dots */
+    #nav-dots {
+      position: fixed;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10001;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .nav-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--muted);
+      cursor: pointer;
+      transition: all 0.3s var(--ease-expo);
+      border: 1px solid transparent;
+    }
+
+    .nav-dot.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(0,212,255,0.5);
+    }
+
+    .nav-dot:hover {
+      transform: scale(1.3);
+    }
+
+    /* Slide structure */
+    .slide {
+      min-height: 100dvh;
+      height: 100dvh;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .slide-inner {
+      max-width: 1200px;
+      width: 100%;
+      position: relative;
+      z-index: 2;
+      transform: scale(0.90);
+      transform-origin: center;
+    }
+
+    /* Image slides */
+    .slide-image {
+      width: 100%;
+      max-width: 900px;
+      margin: 2rem auto;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .slide-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .slide-label {
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .slide-title {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: clamp(2rem, 5vw, 4rem);
+      line-height: 1.1;
+      margin-bottom: 2rem;
+      color: var(--text);
+    }
+
+    .slide-body {
+      font-size: 1.125rem;
+      color: var(--text);
+    }
+
+    .slide-body ul {
+      list-style: none;
+      margin: 1.5rem 0;
+    }
+
+    .slide-body ul li {
+      padding-left: 1.5rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+
+    .slide-body ul li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+
+    /* Math blocks */
+    .math-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      overflow-x: auto;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .math-block .katex-display {
+      margin: 0;
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .formula-explanation {
+      flex: 1;
+      min-width: 250px;
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.5;
+      padding-left: 1.5rem;
+      border-left: 2px solid var(--accent);
+    }
+
+    .formula-explanation strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    /* SVG containers */
+    .graph-container {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Entrance animations */
+    .slide-inner > * {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s var(--ease-expo), transform 0.6s var(--ease-expo);
+    }
+
+    .slide.is-visible .slide-inner > *:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.05s; }
+    .slide.is-visible .slide-inner > *:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.15s; }
+    .slide.is-visible .slide-inner > *:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.25s; }
+    .slide.is-visible .slide-inner > *:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.35s; }
+    .slide.is-visible .slide-inner > *:nth-child(5) { opacity: 1; transform: none; transition-delay: 0.45s; }
+    .slide.is-visible .slide-inner > *:nth-child(6) { opacity: 1; transform: none; transition-delay: 0.55s; }
+
+    /* Title slide special */
+    #slide-01 .slide-title {
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #nav-dots {
+        right: 1rem;
+        gap: 0.5rem;
+      }
+
+      .nav-dot {
+        width: 8px;
+        height: 8px;
+      }
+
+      .slide {
+        padding: 3rem 1.5rem;
+      }
+
+      .slide-title {
+        font-size: clamp(1.75rem, 6vw, 3rem);
+      }
+
+      .slide-body {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+  <div id="nav-dots"></div>
+
+  <!-- Slide 01: Title -->
+  <section class="slide" id="slide-01">
+    <div class="slide-inner">
+      <span class="slide-label">EXPO MATEMÁTICA 2025</span>
+      <h2 class="slide-title">TYR AI: Urban Digital Twin & AI Copilot</h2>
+      <div class="slide-body">
+        <p style="font-size: 1.5rem; color: var(--muted); max-width: 800px;">
+          Una exploración técnica del gemelo digital urbano, aprendizaje automático
+          y optimización de logística para Panamá
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 02: What is a Digital Twin? -->
+  <section class="slide" id="slide-02">
+    <div class="slide-inner">
+      <span class="slide-label">FUNDAMENTOS</span>
+      <h2 class="slide-title">¿Qué es un Gemelo Digital?</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 2rem;">Una réplica virtual de un sistema físico que evoluciona en tiempo real.</p>
+        <div class="graph-container">
+          <svg width="600" height="200" viewBox="0 0 600 200">
+            <!-- Physical System -->
+            <rect x="20" y="60" width="140" height="80" rx="8" fill="var(--card)" stroke="var(--border)" stroke-width="2"/>
+            <text x="90" y="95" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">Sistema Físico</text>
+            <text x="90" y="115" text-anchor="middle" fill="var(--muted)" font-size="11">Sensores, Tráfico</text>
+
+            <!-- Arrow right -->
+            <path d="M 165 100 L 215 100" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="190" y="90" text-anchor="middle" fill="var(--accent)" font-size="10">Datos</text>
+
+            <!-- Digital Twin -->
+            <rect x="220" y="60" width="140" height="80" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+            <text x="290" y="95" text-anchor="middle" fill="var(--accent)" font-size="14" font-weight="600">Gemelo Digital</text>
+            <text x="290" y="115" text-anchor="middle" fill="var(--muted)" font-size="11">Simulación, ML</text>
+
+            <!-- Arrow right -->
+            <path d="M 365 100 L 415 100" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="390" y="90" text-anchor="middle" fill="var(--accent)" font-size="10">Insights</text>
+
+            <!-- Decision -->
+            <rect x="420" y="60" width="140" height="80" rx="8" fill="var(--card)" stroke="var(--border)" stroke-width="2"/>
+            <text x="490" y="95" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">Decisiones</text>
+            <text x="490" y="115" text-anchor="middle" fill="var(--muted)" font-size="11">Optimización</text>
+
+            <!-- Arrow back (feedback loop) -->
+            <path d="M 490 145 L 490 165 L 90 165 L 90 145" stroke="var(--accent2)" stroke-width="2" marker-end="url(#arrowhead2)" stroke-dasharray="4,4"/>
+            <text x="290" y="180" text-anchor="middle" fill="var(--accent2)" font-size="10">Control / Feedback</text>
+
+            <defs>
+              <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                <polygon points="0 0, 10 3, 0 6" fill="var(--accent)" />
+              </marker>
+              <marker id="arrowhead2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                <polygon points="0 0, 10 3, 0 6" fill="var(--accent2)" />
+              </marker>
+            </defs>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 03: Digital Twin Visualization Example -->
+  <section class="slide" id="slide-03">
+    <div class="slide-inner">
+      <span class="slide-label">VISUALIZACIÓN</span>
+      <h2 class="slide-title">Gemelo Digital en Acción</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1.5rem;">Ejemplo de gemelo digital industrial con monitoreo en tiempo real</p>
+        <div class="slide-image">
+          <img src="warehouse3dmodelsimulationexample.jpg" alt="3D warehouse digital twin with real-time monitoring">
+        </div>
+        <ul>
+          <li>Visualización 3D de operaciones en tiempo real</li>
+          <li>Monitoreo de utilización de equipos y máquinas</li>
+          <li>Notificaciones de mantenimiento predictivo</li>
+          <li>Análisis de eficiencia y optimización de procesos</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 04: Why Digital Twins matter globally -->
+  <section class="slide" id="slide-04">
+    <div class="slide-inner">
+      <span class="slide-label">IMPACTO GLOBAL</span>
+      <h2 class="slide-title">¿Por qué importan los Gemelos Digitales?</h2>
+      <div class="slide-body">
+        <div class="graph-container">
+          <svg width="500" height="300" viewBox="0 0 500 300">
+            <!-- Y-axis -->
+            <line x1="60" y1="40" x2="60" y2="250" stroke="#555" stroke-width="2"/>
+            <!-- X-axis -->
+            <line x1="60" y1="250" x2="460" y2="250" stroke="#555" stroke-width="2"/>
+
+            <!-- Y-axis label -->
+            <text x="30" y="150" text-anchor="middle" fill="#888" font-size="12" transform="rotate(-90, 30, 150)">Valor relativo</text>
+
+            <!-- Grid lines -->
+            <line x1="60" y1="200" x2="460" y2="200" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="150" x2="460" y2="150" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="100" x2="460" y2="100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            <!-- Traditional bars -->
+            <rect x="100" y="180" width="80" height="70" fill="var(--accent2)" opacity="0.6"/>
+            <text x="140" y="265" text-anchor="middle" fill="var(--text)" font-size="11">Costo</text>
+            <text x="140" y="170" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">Alto</text>
+
+            <rect x="200" y="150" width="80" height="100" fill="var(--accent2)" opacity="0.6"/>
+            <text x="240" y="265" text-anchor="middle" fill="var(--text)" font-size="11">Incertidumbre</text>
+            <text x="240" y="140" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">Alta</text>
+
+            <!-- Digital Twin bars -->
+            <rect x="320" y="220" width="80" height="30" fill="var(--accent)" opacity="0.8"/>
+            <text x="360" y="265" text-anchor="middle" fill="var(--text)" font-size="11">Costo (DT)</text>
+            <text x="360" y="210" text-anchor="middle" fill="var(--accent)" font-size="14" font-weight="600">Bajo</text>
+
+            <rect x="420" y="210" width="80" height="40" fill="var(--accent)" opacity="0.8"/>
+            <text x="460" y="280" text-anchor="middle" fill="var(--text)" font-size="11">Incertidumbre (DT)</text>
+            <text x="460" y="200" text-anchor="middle" fill="var(--accent)" font-size="14" font-weight="600">Baja</text>
+
+            <!-- Labels -->
+            <text x="150" y="30" text-anchor="middle" fill="var(--accent2)" font-size="13" font-weight="600">Tradicional</text>
+            <text x="380" y="30" text-anchor="middle" fill="var(--accent)" font-size="13" font-weight="600">Con Gemelo Digital</text>
+          </svg>
+        </div>
+        <ul>
+          <li>Reducción de costos operativos hasta 30%</li>
+          <li>Simulación sin riesgo de escenarios</li>
+          <li>Predicción y prevención de problemas</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 05: What is an Urban Digital Twin? -->
+  <section class="slide" id="slide-05">
+    <div class="slide-inner">
+      <span class="slide-label">ARQUITECTURA</span>
+      <h2 class="slide-title">¿Qué es un Gemelo Digital Urbano?</h2>
+      <div class="slide-body">
+        <div class="graph-container">
+          <svg width="600" height="280" viewBox="0 0 600 280">
+            <!-- Layer 1: Physical -->
+            <rect x="50" y="200" width="500" height="60" rx="8" fill="var(--card)" stroke="var(--border)" stroke-width="2"/>
+            <text x="300" y="225" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">Capa Física</text>
+            <text x="300" y="245" text-anchor="middle" fill="var(--muted)" font-size="11">Infraestructura, sensores IoT, tráfico vehicular</text>
+
+            <!-- Layer 2: Data -->
+            <rect x="80" y="120" width="440" height="60" rx="8" fill="var(--card)" stroke="var(--accent2)" stroke-width="2"/>
+            <text x="300" y="145" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">Capa de Datos</text>
+            <text x="300" y="165" text-anchor="middle" fill="var(--muted)" font-size="11">Ingesta, procesamiento, estado en tiempo real</text>
+
+            <!-- Layer 3: Intelligence -->
+            <rect x="110" y="40" width="380" height="60" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+            <text x="300" y="65" text-anchor="middle" fill="var(--accent)" font-size="14" font-weight="600">Capa Inteligente</text>
+            <text x="300" y="85" text-anchor="middle" fill="var(--muted)" font-size="11">ML, optimización, simulación, LLM copilot</text>
+
+            <!-- Arrows -->
+            <path d="M 300 195 L 300 185" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <path d="M 300 115 L 300 105" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 06: Singapore: Virtual Singapore overview -->
+  <section class="slide" id="slide-06">
+    <div class="slide-inner">
+      <span class="slide-label">CASO DE ESTUDIO</span>
+      <h2 class="slide-title">Singapur: Virtual Singapore</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1.5rem;">Plataforma 3D dinámica de toda la ciudad-estado</p>
+        <div class="slide-image">
+          <img src="Virtual-Singapore.jpg" alt="Virtual Singapore 3D city model">
+        </div>
+        <ul>
+          <li>Colaboración gobierno-academia-industria</li>
+          <li>Datos geoespaciales 3D + IoT en tiempo real</li>
+          <li>Simulaciones de clima, movilidad, urbanismo</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 07: Singapore: Use cases -->
+  <section class="slide" id="slide-07">
+    <div class="slide-inner">
+      <span class="slide-label">CASO DE ESTUDIO</span>
+      <h2 class="slide-title">Singapur: Simulación Ambiental</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1.5rem;">Simulación de flujo de aire y clima urbano en tiempo real</p>
+        <div class="slide-image">
+          <img src="airflowsimulationexample.jpg" alt="Airflow simulation in Virtual Singapore">
+        </div>
+        <ul>
+          <li>Propagación de viento entre edificios</li>
+          <li>Islas de calor urbano y ventilación natural</li>
+          <li>Optimización del diseño arquitectónico</li>
+          <li>Predicción de calidad del aire</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 08: Panama's logistics context -->
+  <section class="slide" id="slide-08">
+    <div class="slide-inner">
+      <span class="slide-label">CONTEXTO PANAMÁ</span>
+      <h2 class="slide-title">Desafío Logístico de Panamá</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1.5rem;">Vía Centenario: 12 km que conectan centro logístico con el puerto</p>
+        <div class="graph-container">
+          <svg width="600" height="260" viewBox="0 0 600 260">
+            <!-- Axes -->
+            <line x1="60" y1="220" x2="560" y2="220" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="30" x2="60" y2="220" stroke="#555" stroke-width="2"/>
+
+            <!-- Grid -->
+            <line x1="60" y1="170" x2="560" y2="170" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="120" x2="560" y2="120" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="70" x2="560" y2="70" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            <!-- X-axis labels -->
+            <text x="110" y="240" text-anchor="middle" fill="#888" font-size="10">6:00</text>
+            <text x="210" y="240" text-anchor="middle" fill="#888" font-size="10">9:00</text>
+            <text x="310" y="240" text-anchor="middle" fill="#888" font-size="10">12:00</text>
+            <text x="410" y="240" text-anchor="middle" fill="#888" font-size="10">15:00</text>
+            <text x="510" y="240" text-anchor="middle" fill="#888" font-size="10">18:00</text>
+
+            <!-- Y-axis labels -->
+            <text x="45" y="225" text-anchor="end" fill="#888" font-size="10">15</text>
+            <text x="45" y="175" text-anchor="end" fill="#888" font-size="10">20</text>
+            <text x="45" y="125" text-anchor="end" fill="#888" font-size="10">25</text>
+            <text x="45" y="75" text-anchor="end" fill="#888" font-size="10">30</text>
+            <text x="45" y="35" text-anchor="end" fill="#888" font-size="10">35</text>
+
+            <!-- Axis labels -->
+            <text x="310" y="258" text-anchor="middle" fill="var(--text)" font-size="12">Hora del día</text>
+            <text x="20" y="130" text-anchor="middle" fill="var(--text)" font-size="12" transform="rotate(-90, 20, 130)">Tiempo de viaje (min)</text>
+
+            <!-- Travel time curve (AM peak, midday low, PM peak) -->
+            <path d="M 60,195 L 110,140 L 160,85 L 210,70 L 260,120 L 310,145 L 360,130 L 410,100 L 460,75 L 510,80 L 560,120"
+                  stroke="var(--accent)" stroke-width="3" fill="none"/>
+
+            <!-- Peak annotations -->
+            <circle cx="210" cy="70" r="5" fill="var(--accent)"/>
+            <text x="210" y="55" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">Pico AM</text>
+
+            <circle cx="460" cy="75" r="5" fill="var(--accent)"/>
+            <text x="460" y="60" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">Pico PM</text>
+          </svg>
+        </div>
+        <ul>
+          <li>Variabilidad: 15–35 min para los mismos 12 km</li>
+          <li>Picos AM/PM generan retrasos costosos</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 09: How Panama could benefit -->
+  <section class="slide" id="slide-09">
+    <div class="slide-inner">
+      <span class="slide-label">OPORTUNIDAD</span>
+      <h2 class="slide-title">Beneficio para Panamá</h2>
+      <div class="slide-body">
+        <div class="graph-container">
+          <svg width="500" height="280" viewBox="0 0 500 280">
+            <!-- Y-axis -->
+            <line x1="60" y1="40" x2="60" y2="240" stroke="#555" stroke-width="2"/>
+            <!-- X-axis -->
+            <line x1="60" y1="240" x2="460" y2="240" stroke="#555" stroke-width="2"/>
+
+            <!-- Grid -->
+            <line x1="60" y1="190" x2="460" y2="190" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="140" x2="460" y2="140" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="90" x2="460" y2="90" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            <!-- Before bars -->
+            <rect x="100" y="100" width="100" height="140" fill="var(--accent2)" opacity="0.6"/>
+            <text x="150" y="255" text-anchor="middle" fill="var(--text)" font-size="12">Sin Gemelo</text>
+            <text x="150" y="85" text-anchor="middle" fill="var(--accent2)" font-size="14" font-weight="600">28 min</text>
+
+            <!-- After bars -->
+            <rect x="280" y="160" width="100" height="80" fill="var(--accent)" opacity="0.8"/>
+            <text x="330" y="255" text-anchor="middle" fill="var(--text)" font-size="12">Con Gemelo</text>
+            <text x="330" y="145" text-anchor="middle" fill="var(--accent)" font-size="14" font-weight="600">19 min</text>
+
+            <!-- Improvement arrow -->
+            <path d="M 210 170 L 270 170" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="4,4"/>
+            <text x="240" y="160" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">-32%</text>
+
+            <!-- Y-axis label -->
+            <text x="30" y="140" text-anchor="middle" fill="var(--text)" font-size="11" transform="rotate(-90, 30, 140)">Tiempo promedio (min)</text>
+          </svg>
+        </div>
+        <ul>
+          <li>Optimización de rutas y horarios de salida</li>
+          <li>Reducción de costos operativos de flota</li>
+          <li>Predicción de congestión en tiempo real</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 10: Traffic fundamental diagram -->
+  <section class="slide" id="slide-10">
+    <div class="slide-inner">
+      <span class="slide-label">TEORÍA: FLUJO DE TRÁFICO</span>
+      <h2 class="slide-title">Diagrama Fundamental del Tráfico</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Relación entre flujo $q$ (vehículos/hora) y densidad $k$ (vehículos/km)</p>
+        <div class="math-block">
+          $$q(k) = v_f \cdot k \left(1 - \frac{k}{k_j}\right)$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Calcula cuántos vehículos pasan por hora según la densidad de tráfico. Cuando hay pocos autos, fluyen rápido pero el total es bajo. Con muchos autos, se congestionan y el flujo también cae. El máximo está en el medio.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="500" height="300" viewBox="0 0 500 300">
+            <!-- Axes -->
+            <line x1="60" y1="260" x2="460" y2="260" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="40" x2="60" y2="260" stroke="#555" stroke-width="2"/>
+
+            <!-- Grid -->
+            <line x1="60" y1="210" x2="460" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="160" x2="460" y2="160" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="110" x2="460" y2="110" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            <!-- Parabola curve: q(k) = 100*k*(1 - k/150) -->
+            <!-- k from 0 to 150, scale x: 0->60, 150->460, y: 0->260, max_q=3750->60 -->
+            <path d="M 60,260
+                     Q 160,110 260,60
+                     T 460,260"
+                  stroke="var(--accent)" stroke-width="3" fill="none"/>
+
+            <!-- Region separators -->
+            <line x1="180" y1="40" x2="180" y2="260" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4,4"/>
+            <line x1="340" y1="40" x2="340" y2="260" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4,4"/>
+
+            <!-- Region labels -->
+            <text x="120" y="30" text-anchor="middle" fill="var(--text)" font-size="11">Flujo libre</text>
+            <text x="260" y="30" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">Capacidad</text>
+            <text x="400" y="30" text-anchor="middle" fill="#ff6b6b" font-size="11">Congestión</text>
+
+            <!-- Axis labels -->
+            <text x="260" y="285" text-anchor="middle" fill="var(--text)" font-size="12">Densidad $k$ (veh/km)</text>
+            <text x="20" y="150" text-anchor="middle" fill="var(--text)" font-size="12" transform="rotate(-90, 20, 150)">Flujo $q$ (veh/h)</text>
+
+            <!-- Tick labels -->
+            <text x="60" y="275" text-anchor="middle" fill="#888" font-size="10">0</text>
+            <text x="260" y="275" text-anchor="middle" fill="#888" font-size="10">75</text>
+            <text x="460" y="275" text-anchor="middle" fill="#888" font-size="10">150</text>
+          </svg>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--muted);">
+          donde $v_f$ = velocidad libre, $k_j$ = densidad de atasco
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 11: M/M/1 queueing -->
+  <section class="slide" id="slide-11">
+    <div class="slide-inner">
+      <span class="slide-label">TEORÍA: COLAS</span>
+      <h2 class="slide-title">Teoría de Colas M/M/1</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Tiempo de espera en función de la utilización $\rho = \lambda/\mu$</p>
+        <div class="math-block">
+          $$W = \frac{1}{\mu - \lambda} = \frac{1}{\mu(1-\rho)}$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Predice cuánto tiempo esperan los camiones en función de qué tan ocupada está la vía. Si $\lambda$ (llegadas/hora) se acerca a $\mu$ (capacidad/hora), el tiempo de espera explota. Ayuda a evitar saturación.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="500" height="280" viewBox="0 0 500 280">
+            <!-- Axes -->
+            <line x1="60" y1="250" x2="460" y2="250" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="30" x2="60" y2="250" stroke="#555" stroke-width="2"/>
+
+            <!-- Grid -->
+            <line x1="60" y1="200" x2="460" y2="200" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="150" x2="460" y2="150" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="100" x2="460" y2="100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            <!-- W curve: exponential explosion as rho -> 1 -->
+            <!-- rho from 0 to 0.99, x: 0->60, 1->460 -->
+            <!-- W = 1/(1-rho), scale y: W=1->250, W=10->100, W=100->40 -->
+            <path d="M 60,245
+                     L 100,240
+                     L 150,230
+                     L 200,215
+                     L 250,190
+                     L 300,155
+                     L 350,110
+                     L 380,75
+                     L 400,50
+                     L 420,35
+                     L 440,30"
+                  stroke="var(--accent)" stroke-width="3" fill="none"/>
+
+            <!-- Danger zone annotation -->
+            <line x1="380" y1="30" x2="380" y2="250" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="420" y="20" text-anchor="middle" fill="#ff6b6b" font-size="11" font-weight="600">Zona peligrosa</text>
+
+            <!-- Axis labels -->
+            <text x="260" y="270" text-anchor="middle" fill="var(--text)" font-size="12">Utilización $\rho$</text>
+            <text x="20" y="140" text-anchor="middle" fill="var(--text)" font-size="12" transform="rotate(-90, 20, 140)">Tiempo de espera $W$</text>
+
+            <!-- Tick labels -->
+            <text x="60" y="265" text-anchor="middle" fill="#888" font-size="10">0.0</text>
+            <text x="260" y="265" text-anchor="middle" fill="#888" font-size="10">0.5</text>
+            <text x="380" y="265" text-anchor="middle" fill="#888" font-size="10">0.9</text>
+            <text x="460" y="265" text-anchor="middle" fill="#888" font-size="10">1.0</text>
+          </svg>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--muted);">
+          $\lambda$ = tasa de llegada, $\mu$ = tasa de servicio
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 12: Our Digital Twin: two components -->
+  <section class="slide" id="slide-12">
+    <div class="slide-inner">
+      <span class="slide-label">NUESTRA SOLUCIÓN</span>
+      <h2 class="slide-title">Nuestro Gemelo Digital: Dos Componentes</h2>
+      <div class="slide-body">
+        <div class="graph-container">
+          <svg width="600" height="200" viewBox="0 0 600 200">
+            <!-- Logistics OS -->
+            <rect x="50" y="60" width="200" height="80" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+            <text x="150" y="90" text-anchor="middle" fill="var(--accent)" font-size="15" font-weight="600">Logistics OS</text>
+            <text x="150" y="110" text-anchor="middle" fill="var(--muted)" font-size="11">LLM Copilot (Gemini)</text>
+            <text x="150" y="125" text-anchor="middle" fill="var(--muted)" font-size="11">Chat, RAG, predicciones</text>
+
+            <!-- Bidirectional arrow -->
+            <path d="M 255 100 L 295 100" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <path d="M 295 100 L 255 100" stroke="var(--accent)" stroke-width="2" marker-start="url(#arrowstart)"/>
+            <text x="275" y="90" text-anchor="middle" fill="var(--accent)" font-size="10">API</text>
+
+            <!-- Gemelo Centenario -->
+            <rect x="350" y="60" width="200" height="80" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+            <text x="450" y="90" text-anchor="middle" fill="var(--accent)" font-size="15" font-weight="600">Gemelo Centenario</text>
+            <text x="450" y="110" text-anchor="middle" fill="var(--muted)" font-size="11">Simulación física</text>
+            <text x="450" y="125" text-anchor="middle" fill="var(--muted)" font-size="11">Estimación de estado</text>
+
+            <defs>
+              <marker id="arrowstart" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto">
+                <polygon points="10 0, 0 3, 10 6" fill="var(--accent)" />
+              </marker>
+            </defs>
+          </svg>
+        </div>
+        <ul>
+          <li><strong>Logistics OS:</strong> interfaz conversacional con LLM</li>
+          <li><strong>Gemelo Centenario:</strong> motor de simulación y ML</li>
+          <li>Integración vía API REST en tiempo real</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 13: How they work together -->
+  <section class="slide" id="slide-13">
+    <div class="slide-inner">
+      <span class="slide-label">ARQUITECTURA</span>
+      <h2 class="slide-title">¿Cómo trabajan juntos?</h2>
+      <div class="slide-body">
+        <div class="graph-container">
+          <svg width="600" height="320" viewBox="0 0 600 320">
+            <!-- User -->
+            <rect x="50" y="20" width="100" height="40" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+            <text x="100" y="45" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">Usuario</text>
+
+            <!-- Arrow down -->
+            <path d="M 100 65 L 100 85" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="120" y="80" fill="var(--accent)" font-size="9">Consulta</text>
+
+            <!-- Chat UI -->
+            <rect x="50" y="90" width="100" height="40" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+            <text x="100" y="115" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">Chat UI</text>
+
+            <!-- Arrow down -->
+            <path d="M 100 135 L 100 155" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="120" y="150" fill="var(--accent)" font-size="9">Prompt</text>
+
+            <!-- LLM (Gemini) -->
+            <rect x="50" y="160" width="100" height="40" rx="6" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+            <text x="100" y="185" text-anchor="middle" fill="var(--accent)" font-size="12" font-weight="600">LLM (Gemini)</text>
+
+            <!-- Arrow right -->
+            <path d="M 155 180 L 240 180" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="197" y="170" text-anchor="middle" fill="var(--accent)" font-size="9">Consulta Twin</text>
+
+            <!-- Digital Twin -->
+            <rect x="245" y="160" width="120" height="40" rx="6" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+            <text x="305" y="185" text-anchor="middle" fill="var(--accent)" font-size="12" font-weight="600">Gemelo Digital</text>
+
+            <!-- Arrow down (Twin processes) -->
+            <path d="M 305 205 L 305 225" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="330" y="220" fill="var(--accent)" font-size="9">Simula</text>
+
+            <!-- Simulation/ML -->
+            <rect x="245" y="230" width="120" height="40" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+            <text x="305" y="255" text-anchor="middle" fill="var(--text)" font-size="11">Kalman, ML, PDE</text>
+
+            <!-- Arrow back up -->
+            <path d="M 370 180 L 455 180" stroke="var(--accent2)" stroke-width="2" marker-end="url(#arrowhead2)"/>
+            <text x="412" y="170" text-anchor="middle" fill="var(--accent2)" font-size="9">Resultado</text>
+
+            <!-- Response -->
+            <rect x="460" y="160" width="100" height="40" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+            <text x="510" y="185" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">Respuesta</text>
+
+            <!-- Arrow back to User -->
+            <path d="M 510 155 L 510 100 L 155 100" stroke="var(--accent2)" stroke-width="2" marker-end="url(#arrowhead2)" stroke-dasharray="4,4"/>
+            <text x="480" y="125" text-anchor="middle" fill="var(--accent2)" font-size="9">Lenguaje natural</text>
+          </svg>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--muted); margin-top: 1rem;">
+          Ejemplo: "¿A qué hora debería salir mañana con 20 contenedores?"
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 14: Data sources & state vector -->
+  <section class="slide" id="slide-14">
+    <div class="slide-inner">
+      <span class="slide-label">DATOS</span>
+      <h2 class="slide-title">Fuentes de Datos y Vector de Estado</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Dividimos Vía Centenario en $N$ segmentos, cada uno con estado $(k_i, v_i)$</p>
+        <div class="math-block">
+          $$\mathbf{x}_t = \begin{bmatrix} k_1 \\ v_1 \\ k_2 \\ v_2 \\ \vdots \\ k_N \\ v_N \end{bmatrix}_t, \quad
+          \mathbf{x}_{t+1} = A\mathbf{x}_t + B\mathbf{u}_t + \mathbf{w}_t$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Empaqueta todas las densidades y velocidades de todos los segmentos en un solo vector $\mathbf{x}_t$. La segunda ecuación predice cómo evoluciona el tráfico: el estado futuro depende del estado actual (A), controles como semáforos (B), y ruido aleatorio (w).
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="600" height="160" viewBox="0 0 600 160">
+            <!-- Corridor divided into segments -->
+            <rect x="50" y="60" width="90" height="50" rx="4" fill="var(--card)" stroke="var(--accent)" stroke-width="1"/>
+            <text x="95" y="90" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">Seg 1</text>
+            <text x="95" y="105" text-anchor="middle" fill="var(--muted)" font-size="9">$k_1, v_1$</text>
+
+            <rect x="155" y="60" width="90" height="50" rx="4" fill="var(--card)" stroke="var(--accent)" stroke-width="1"/>
+            <text x="200" y="90" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">Seg 2</text>
+            <text x="200" y="105" text-anchor="middle" fill="var(--muted)" font-size="9">$k_2, v_2$</text>
+
+            <rect x="260" y="60" width="90" height="50" rx="4" fill="var(--card)" stroke="var(--accent)" stroke-width="1"/>
+            <text x="305" y="90" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">Seg 3</text>
+            <text x="305" y="105" text-anchor="middle" fill="var(--muted)" font-size="9">$k_3, v_3$</text>
+
+            <text x="375" y="90" text-anchor="middle" fill="var(--muted)" font-size="14">...</text>
+
+            <rect x="410" y="60" width="90" height="50" rx="4" fill="var(--card)" stroke="var(--accent)" stroke-width="1"/>
+            <text x="455" y="90" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">Seg $N$</text>
+            <text x="455" y="105" text-anchor="middle" fill="var(--muted)" font-size="9">$k_N, v_N$</text>
+
+            <!-- Flow arrows -->
+            <path d="M 145 85 L 150 85" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <path d="M 250 85 L 255 85" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+            <!-- Title -->
+            <text x="300" y="30" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Vía Centenario segmentada</text>
+          </svg>
+        </div>
+        <ul>
+          <li>Fuentes: GPS de flotas, sensores Waze/Google, cámaras</li>
+          <li>Modelo de espacio de estados lineal (Kalman filter)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 15: State estimation (Kalman) -->
+  <section class="slide" id="slide-15">
+    <div class="slide-inner">
+      <span class="slide-label">ESTIMACIÓN DE ESTADO</span>
+      <h2 class="slide-title">Filtro de Kalman</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Fusión de predicción del modelo con mediciones ruidosas</p>
+        <div class="math-block">
+          $$\hat{\mathbf{x}}_{t+1} = A\hat{\mathbf{x}}_t + B\mathbf{u}_t + K_t\left(\mathbf{y}_t - C\hat{\mathbf{x}}_t\right)$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Combina la predicción del modelo (primeros dos términos) con datos reales de sensores GPS/Waze. El término $K_t(...)$ corrige la predicción cuando hay diferencia entre lo medido $\mathbf{y}_t$ y lo esperado. Resultado: estimación más precisa que sensores o modelo solos.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="600" height="240" viewBox="0 0 600 240">
+            <!-- Axes -->
+            <line x1="60" y1="200" x2="560" y2="200" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="30" x2="60" y2="200" stroke="#555" stroke-width="2"/>
+
+            <!-- Grid -->
+            <line x1="60" y1="150" x2="560" y2="150" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="100" x2="560" y2="100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            <!-- Noisy measured (light gray) -->
+            <path d="M 60,120 L 80,110 L 100,130 L 120,115 L 140,125 L 160,105 L 180,120 L 200,100 L 220,115 L 240,95 L 260,110 L 280,90 L 300,105 L 320,85 L 340,100 L 360,80 L 380,95 L 400,75 L 420,90 L 440,70 L 460,85 L 480,65 L 500,80 L 520,60 L 540,75 L 560,55"
+                  stroke="#aaa" stroke-width="1.5" fill="none"/>
+
+            <!-- Predicted (dashed gray) -->
+            <path d="M 60,125 L 100,120 L 140,115 L 180,110 L 220,105 L 260,100 L 300,95 L 340,90 L 380,85 L 420,80 L 460,75 L 500,70 L 540,65 L 560,63"
+                  stroke="#888" stroke-width="2" stroke-dasharray="6,4" fill="none"/>
+
+            <!-- Filtered (cyan, thick) -->
+            <path d="M 60,123 L 100,118 L 140,113 L 180,108 L 220,103 L 260,98 L 300,93 L 340,88 L 380,83 L 420,78 L 460,73 L 500,68 L 540,63 L 560,61"
+                  stroke="var(--accent)" stroke-width="3" fill="none"/>
+
+            <!-- Axis labels -->
+            <text x="310" y="225" text-anchor="middle" fill="var(--text)" font-size="12">Tiempo (pasos)</text>
+            <text x="20" y="115" text-anchor="middle" fill="var(--text)" font-size="12" transform="rotate(-90, 20, 115)">Velocidad (km/h)</text>
+
+            <!-- Legend -->
+            <line x1="420" y1="45" x2="450" y2="45" stroke="#aaa" stroke-width="1.5"/>
+            <text x="460" y="50" fill="#aaa" font-size="10">Medido (ruidoso)</text>
+
+            <line x1="420" y1="60" x2="450" y2="60" stroke="#888" stroke-width="2" stroke-dasharray="6,4"/>
+            <text x="460" y="65" fill="#888" font-size="10">Predicción</text>
+
+            <line x1="420" y1="75" x2="450" y2="75" stroke="var(--accent)" stroke-width="3"/>
+            <text x="460" y="80" fill="var(--accent)" font-size="10">Filtrado (Kalman)</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 16: Traffic flow model — LWR PDE -->
+  <section class="slide" id="slide-16">
+    <div class="slide-inner">
+      <span class="slide-label">MODELO FÍSICO</span>
+      <h2 class="slide-title">Modelo de Flujo: Ecuación LWR</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Ecuación en derivadas parciales de Lighthill-Whitham-Richards</p>
+        <div class="math-block">
+          $$\frac{\partial k}{\partial t} + \frac{\partial q(k)}{\partial x} = 0$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Modela cómo se propagan las ondas de tráfico en el espacio y tiempo. Si entra más flujo del que sale en un punto, la densidad aumenta ($\partial k/\partial t > 0$). Si sale más, disminuye. Los atascos viajan hacia atrás como ondas.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="500" height="240" viewBox="0 0 500 240">
+            <!-- Same fundamental diagram as slide 09, but with annotation -->
+            <line x1="60" y1="220" x2="460" y2="220" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="40" x2="60" y2="220" stroke="#555" stroke-width="2"/>
+
+            <path d="M 60,220 Q 160,90 260,50 T 460,220"
+                  stroke="var(--accent)" stroke-width="3" fill="none"/>
+
+            <!-- Operating point annotation -->
+            <circle cx="200" cy="100" r="6" fill="#ff6b6b"/>
+            <text x="220" y="95" fill="#ff6b6b" font-size="11" font-weight="600">Punto actual</text>
+            <text x="220" y="110" fill="#ff6b6b" font-size="10">Vía Centenario</text>
+
+            <!-- Axis labels -->
+            <text x="260" y="240" text-anchor="middle" fill="var(--text)" font-size="11">Densidad $k$</text>
+            <text x="20" y="130" text-anchor="middle" fill="var(--text)" font-size="11" transform="rotate(-90, 20, 130)">Flujo $q(k)$</text>
+          </svg>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--muted);">
+          Resolvemos numéricamente con método de diferencias finitas
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 17: Discrete simulation — cell model -->
+  <section class="slide" id="slide-17">
+    <div class="slide-inner">
+      <span class="slide-label">SIMULACIÓN</span>
+      <h2 class="slide-title">Simulación Discreta: Modelo Celular</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Discretización espacial y temporal de la PDE</p>
+        <div class="math-block">
+          $$k_i^{t+1} = k_i^t + \frac{\Delta t}{\Delta x}\left(q_{i-1}^t - q_i^t\right)$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Versión computacional de la PDE. Divide la vía en celdas (500m cada una) y avanza en pasos de tiempo (30s). Actualiza la densidad de cada celda sumando el flujo que entra del segmento anterior menos el que sale. Así podemos simular todo Centenario en computadora.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="600" height="180" viewBox="0 0 600 180">
+            <!-- Grid of cells -->
+            <rect x="50" y="60" width="80" height="60" rx="4" fill="var(--card)" stroke="var(--accent)" stroke-width="1"/>
+            <text x="90" y="85" text-anchor="middle" fill="var(--accent)" font-size="11">Celda $i-1$</text>
+            <text x="90" y="105" text-anchor="middle" fill="var(--muted)" font-size="10">$k_{i-1}^t$</text>
+
+            <!-- Flow arrow -->
+            <path d="M 135 90 L 155 90" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="145" y="80" text-anchor="middle" fill="var(--accent)" font-size="9">$q_{i-1}^t$</text>
+
+            <rect x="160" y="60" width="80" height="60" rx="4" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+            <text x="200" y="85" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">Celda $i$</text>
+            <text x="200" y="105" text-anchor="middle" fill="var(--muted)" font-size="10">$k_i^t \to k_i^{t+1}$</text>
+
+            <!-- Flow arrow -->
+            <path d="M 245 90 L 265 90" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="255" y="80" text-anchor="middle" fill="var(--accent)" font-size="9">$q_i^t$</text>
+
+            <rect x="270" y="60" width="80" height="60" rx="4" fill="var(--card)" stroke="var(--accent)" stroke-width="1"/>
+            <text x="310" y="85" text-anchor="middle" fill="var(--accent)" font-size="11">Celda $i+1$</text>
+            <text x="310" y="105" text-anchor="middle" fill="var(--muted)" font-size="10">$k_{i+1}^t$</text>
+
+            <!-- Title -->
+            <text x="200" y="30" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Actualización celular en cada paso de tiempo</text>
+          </svg>
+        </div>
+        <ul>
+          <li>$\Delta x$ = longitud de cada celda (ej. 500 m)</li>
+          <li>$\Delta t$ = paso de tiempo de simulación (ej. 30 s)</li>
+          <li>Condición CFL para estabilidad: $\Delta t \leq \Delta x / v_{max}$</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 18: ML Regression: travel time prediction -->
+  <section class="slide" id="slide-18">
+    <div class="slide-inner">
+      <span class="slide-label">MACHINE LEARNING</span>
+      <h2 class="slide-title">Regresión: Predicción de Tiempo de Viaje</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Modelo lineal multivariado</p>
+        <div class="math-block">
+          $$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_n x_n$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Predice tiempo de viaje ($y$) a partir de múltiples variables: densidad promedio ($x_1$), hora del día ($x_2$), día de semana ($x_3$), clima ($x_4$), etc. Cada $\beta_i$ indica cuánto aporta esa variable. Entrenamos con datos históricos para encontrar los mejores coeficientes.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="500" height="300" viewBox="0 0 500 300">
+            <!-- Axes -->
+            <line x1="60" y1="260" x2="460" y2="260" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="40" x2="60" y2="260" stroke="#555" stroke-width="2"/>
+
+            <!-- Grid -->
+            <line x1="60" y1="210" x2="460" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="160" x2="460" y2="160" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="110" x2="460" y2="110" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            <!-- Scatter points (synthetic: positive correlation) -->
+            <circle cx="100" cy="230" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="120" cy="220" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="140" cy="210" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="160" cy="200" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="180" cy="190" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="200" cy="180" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="220" cy="170" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="240" cy="160" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="260" cy="150" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="280" cy="140" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="300" cy="130" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="320" cy="120" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="340" cy="110" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="360" cy="100" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="380" cy="90" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="400" cy="80" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="420" cy="70" r="4" fill="var(--text)" opacity="0.6"/>
+
+            <!-- Add some scatter -->
+            <circle cx="110" cy="225" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="150" cy="205" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="190" cy="185" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="230" cy="165" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="270" cy="145" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="310" cy="125" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="350" cy="105" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="390" cy="85" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="130" cy="215" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="170" cy="195" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="210" cy="175" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="250" cy="155" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="290" cy="135" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="330" cy="115" r="4" fill="var(--text)" opacity="0.6"/>
+            <circle cx="370" cy="95" r="4" fill="var(--text)" opacity="0.6"/>
+
+            <!-- Regression line -->
+            <line x1="80" y1="235" x2="440" y2="60" stroke="var(--accent)" stroke-width="3"/>
+
+            <!-- Axis labels -->
+            <text x="260" y="285" text-anchor="middle" fill="var(--text)" font-size="12">Densidad promedio (veh/km)</text>
+            <text x="20" y="150" text-anchor="middle" fill="var(--text)" font-size="12" transform="rotate(-90, 20, 150)">Tiempo de viaje (min)</text>
+
+            <!-- R² annotation -->
+            <text x="400" y="240" text-anchor="end" fill="var(--accent)" font-size="11" font-weight="600">$R^2 = 0.91$</text>
+          </svg>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--muted);">
+          Características: densidad, hora, día de semana, clima, eventos
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 19: ML Regression: training loss -->
+  <section class="slide" id="slide-19">
+    <div class="slide-inner">
+      <span class="slide-label">ENTRENAMIENTO</span>
+      <h2 class="slide-title">Función de Pérdida: MSE</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Mean Squared Error durante el entrenamiento</p>
+        <div class="math-block">
+          $$\text{MSE} = \frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Mide qué tan equivocadas son las predicciones del modelo. Toma cada error $(y_i - \hat{y}_i)$, lo eleva al cuadrado (para penalizar errores grandes), y promedia. El algoritmo de entrenamiento ajusta los $\beta$ para minimizar este número.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="500" height="260" viewBox="0 0 500 260">
+            <!-- Axes -->
+            <line x1="60" y1="240" x2="460" y2="240" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="30" x2="60" y2="240" stroke="#555" stroke-width="2"/>
+
+            <!-- Grid -->
+            <line x1="60" y1="190" x2="460" y2="190" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="140" x2="460" y2="140" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="90" x2="460" y2="90" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            <!-- MSE curve: exponential decay from 2.0 to 0.05 -->
+            <!-- epochs 0->100, x: 0->60, 100->460 -->
+            <!-- MSE: 2.0->40, 0.05->235 -->
+            <path d="M 60,40
+                     Q 120,60 180,120
+                     T 280,200
+                     Q 340,220 460,230"
+                  stroke="var(--accent)" stroke-width="3" fill="none"/>
+
+            <!-- Convergence reference line -->
+            <line x1="60" y1="230" x2="460" y2="230" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="420" y="225" text-anchor="end" fill="var(--muted)" font-size="10">Convergencia</text>
+
+            <!-- Axis labels -->
+            <text x="260" y="258" text-anchor="middle" fill="var(--text)" font-size="12">Época (iteraciones)</text>
+            <text x="20" y="135" text-anchor="middle" fill="var(--text)" font-size="12" transform="rotate(-90, 20, 135)">MSE</text>
+
+            <!-- Tick labels -->
+            <text x="60" y="255" text-anchor="middle" fill="#888" font-size="10">0</text>
+            <text x="260" y="255" text-anchor="middle" fill="#888" font-size="10">50</text>
+            <text x="460" y="255" text-anchor="middle" fill="#888" font-size="10">100</text>
+          </svg>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--muted);">
+          Optimización: Gradient Descent (Adam, learning rate = 0.001)
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 20: ML Classification: congestion levels -->
+  <section class="slide" id="slide-20">
+    <div class="slide-inner">
+      <span class="slide-label">MACHINE LEARNING</span>
+      <h2 class="slide-title">Clasificación: Nivel de Congestión</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Función logística (sigmoid) para probabilidad de congestión</p>
+        <div class="math-block">
+          $$P(\text{congestionado}) = \frac{1}{1 + e^{-z}}, \quad z = \beta_0 + \beta_1 x_1 + \cdots$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Transforma cualquier valor $z$ (combinación lineal de variables) en una probabilidad entre 0 y 1. Si $z$ es muy negativo, $P \approx 0$ (libre). Si $z$ es muy positivo, $P \approx 1$ (congestionado). Permite clasificar el estado del tráfico en categorías.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="500" height="280" viewBox="0 0 500 280">
+            <!-- Axes -->
+            <line x1="60" y1="250" x2="460" y2="250" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="30" x2="60" y2="250" stroke="#555" stroke-width="2"/>
+
+            <!-- Region bands -->
+            <!-- Free: 0 - 0.3 -->
+            <rect x="60" y="177" width="400" height="73" fill="#555" opacity="0.08"/>
+            <text x="70" y="245" fill="#aaa" font-size="10">Libre</text>
+
+            <!-- Moderate: 0.3 - 0.7 -->
+            <rect x="60" y="103" width="400" height="74" fill="#ffcc00" opacity="0.08"/>
+            <text x="70" y="170" fill="#ffcc00" font-size="10">Moderado</text>
+
+            <!-- Congested: 0.7 - 1.0 -->
+            <rect x="60" y="30" width="400" height="73" fill="#ff6b6b" opacity="0.08"/>
+            <text x="70" y="95" fill="#ff6b6b" font-size="10">Congestionado</text>
+
+            <!-- Threshold lines -->
+            <line x1="60" y1="177" x2="460" y2="177" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="465" y="180" fill="var(--muted)" font-size="9">0.3</text>
+
+            <line x1="60" y1="103" x2="460" y2="103" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="465" y="106" fill="var(--muted)" font-size="9">0.7</text>
+
+            <!-- Sigmoid curve -->
+            <!-- z from -6 to +6, x: -6->60, +6->460 -->
+            <!-- P: 0->250, 1->30 -->
+            <path d="M 60,249
+                     Q 130,248 200,200
+                     T 330,52
+                     Q 380,32 460,31"
+                  stroke="var(--accent)" stroke-width="3" fill="none"/>
+
+            <!-- Axis labels -->
+            <text x="260" y="270" text-anchor="middle" fill="var(--text)" font-size="12">Score $z$</text>
+            <text x="20" y="140" text-anchor="middle" fill="var(--text)" font-size="12" transform="rotate(-90, 20, 140)">$P(\text{congestión})$</text>
+
+            <!-- Tick labels -->
+            <text x="60" y="265" text-anchor="middle" fill="#888" font-size="10">-6</text>
+            <text x="260" y="265" text-anchor="middle" fill="#888" font-size="10">0</text>
+            <text x="460" y="265" text-anchor="middle" fill="#888" font-size="10">+6</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 21: Optimization: departure time -->
+  <section class="slide" id="slide-21">
+    <div class="slide-inner">
+      <span class="slide-label">OPTIMIZACIÓN</span>
+      <h2 class="slide-title">Optimización: Hora de Salida</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Minimizar función de costo combinada</p>
+        <div class="math-block">
+          $$\min_{t, L} \; C(t,L) = \alpha \cdot T(t,L) + \beta \cdot C_{\text{op}}(L)$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Encuentra la mejor hora de salida $t$ y carga $L$ que minimiza el costo total. Balancea dos objetivos: reducir tiempo de viaje $T$ (que varía según hora) y reducir costos operativos $C_{\text{op}}$ (combustible, salarios). Los pesos $\alpha$ y $\beta$ controlan la importancia de cada uno.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="500" height="300" viewBox="0 0 500 300">
+            <!-- Axes -->
+            <line x1="60" y1="260" x2="460" y2="260" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="40" x2="60" y2="260" stroke="#555" stroke-width="2"/>
+
+            <!-- Grid -->
+            <line x1="60" y1="210" x2="460" y2="210" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="160" x2="460" y2="160" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <line x1="60" y1="110" x2="460" y2="110" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+            <!-- Contour ellipses (simplified) -->
+            <ellipse cx="260" cy="150" rx="180" ry="90" fill="none" stroke="var(--muted)" stroke-width="1" opacity="0.3"/>
+            <ellipse cx="260" cy="150" rx="140" ry="70" fill="none" stroke="var(--muted)" stroke-width="1" opacity="0.4"/>
+            <ellipse cx="260" cy="150" rx="100" ry="50" fill="none" stroke="var(--muted)" stroke-width="1" opacity="0.5"/>
+            <ellipse cx="260" cy="150" rx="60" ry="30" fill="none" stroke="var(--muted)" stroke-width="1" opacity="0.6"/>
+            <ellipse cx="260" cy="150" rx="30" ry="15" fill="none" stroke="var(--accent)" stroke-width="2"/>
+
+            <!-- Optimal point -->
+            <circle cx="260" cy="150" r="6" fill="var(--accent)"/>
+            <text x="280" y="145" fill="var(--accent)" font-size="12" font-weight="600">Óptimo</text>
+
+            <!-- Axis labels -->
+            <text x="260" y="285" text-anchor="middle" fill="var(--text)" font-size="12">Hora de salida $t$</text>
+            <text x="20" y="150" text-anchor="middle" fill="var(--text)" font-size="12" transform="rotate(-90, 20, 150)">Carga $L$ (%)</text>
+
+            <!-- Tick labels -->
+            <text x="60" y="275" text-anchor="middle" fill="#888" font-size="10">6:00</text>
+            <text x="260" y="275" text-anchor="middle" fill="#888" font-size="10">12:00</text>
+            <text x="460" y="275" text-anchor="middle" fill="#888" font-size="10">18:00</text>
+          </svg>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--muted);">
+          $T(t,L)$ = tiempo de viaje predicho, $C_{\text{op}}(L)$ = costo operativo
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 22: LLM Copilot: embeddings & retrieval -->
+  <section class="slide" id="slide-22">
+    <div class="slide-inner">
+      <span class="slide-label">LLM COPILOT</span>
+      <h2 class="slide-title">Embeddings y Retrieval (RAG)</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Representación vectorial de documentos para búsqueda semántica</p>
+        <div class="math-block">
+          $$\text{sim}(\mathbf{e}, \mathbf{e}_i) = \frac{\mathbf{e} \cdot \mathbf{e}_i}{\|\mathbf{e}\| \|\mathbf{e}_i\|} \quad \text{(cosine similarity)}$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Calcula qué tan similar es la consulta del usuario ($\mathbf{e}$) a cada documento en la base de datos ($\mathbf{e}_i$). Valores cercanos a 1 = muy similar, cercanos a 0 = no relacionados. Permite encontrar los documentos más relevantes para responder la pregunta, incluso si usan palabras diferentes.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="500" height="300" viewBox="0 0 500 300">
+            <!-- 2D embedding space -->
+            <!-- Axes (light) -->
+            <line x1="50" y1="250" x2="450" y2="250" stroke="#333" stroke-width="1"/>
+            <line x1="50" y1="50" x2="50" y2="250" stroke="#333" stroke-width="1"/>
+
+            <!-- Cluster 1: traffic docs -->
+            <circle cx="120" cy="100" r="5" fill="var(--text)" opacity="0.5"/>
+            <circle cx="140" cy="110" r="5" fill="var(--text)" opacity="0.5"/>
+            <circle cx="130" cy="90" r="5" fill="var(--text)" opacity="0.5"/>
+            <circle cx="150" cy="105" r="5" fill="var(--text)" opacity="0.5"/>
+            <rect x="100" y="70" width="70" height="60" rx="8" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="135" y="145" text-anchor="middle" fill="var(--muted)" font-size="9">Tráfico</text>
+
+            <!-- Cluster 2: logistics docs -->
+            <circle cx="320" cy="180" r="5" fill="var(--text)" opacity="0.5"/>
+            <circle cx="340" cy="190" r="5" fill="var(--text)" opacity="0.5"/>
+            <circle cx="330" cy="170" r="5" fill="var(--text)" opacity="0.5"/>
+            <circle cx="350" cy="185" r="5" fill="var(--text)" opacity="0.5"/>
+            <rect x="300" y="150" width="70" height="60" rx="8" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="335" y="225" text-anchor="middle" fill="var(--muted)" font-size="9">Logística</text>
+
+            <!-- Cluster 3: weather docs -->
+            <circle cx="220" cy="220" r="5" fill="var(--text)" opacity="0.5"/>
+            <circle cx="240" cy="230" r="5" fill="var(--text)" opacity="0.5"/>
+            <circle cx="230" cy="210" r="5" fill="var(--text)" opacity="0.5"/>
+            <rect x="200" y="190" width="60" height="60" rx="8" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="230" y="265" text-anchor="middle" fill="var(--muted)" font-size="9">Clima</text>
+
+            <!-- Query point -->
+            <circle cx="145" cy="115" r="7" fill="var(--accent)"/>
+            <text x="145" y="135" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600">Consulta</text>
+
+            <!-- Nearest neighbors (dashed lines to cluster 1) -->
+            <line x1="145" y1="115" x2="120" y2="100" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2,2"/>
+            <line x1="145" y1="115" x2="140" y2="110" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2,2"/>
+            <line x1="145" y1="115" x2="150" y2="105" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2,2"/>
+
+            <!-- Title -->
+            <text x="250" y="30" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">Espacio de Embeddings 2D</text>
+          </svg>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--muted);">
+          Gemini embeddings → vecDB → top-k retrieval → contexto LLM
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 23: LLM Copilot: attention mechanism -->
+  <section class="slide" id="slide-23">
+    <div class="slide-inner">
+      <span class="slide-label">LLM COPILOT</span>
+      <h2 class="slide-title">Mecanismo de Atención (Transformer)</h2>
+      <div class="slide-body">
+        <p style="margin-bottom: 1rem;">Cómo el LLM pondera relevancia entre tokens</p>
+        <div class="math-block">
+          $$\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+          <div class="formula-explanation">
+            <strong>¿Qué hace?</strong>
+            Permite que cada palabra "preste atención" a otras palabras relevantes. Calcula scores de compatibilidad ($QK^T$), normaliza con softmax para obtener pesos entre 0-1, y pondera los valores $V$. Así "Centenario" puede enfocarse en "congestionado" y "tráfico" para entender el contexto completo.
+          </div>
+        </div>
+        <div class="graph-container">
+          <svg width="440" height="280" viewBox="0 0 440 280">
+            <!-- 6x6 attention heatmap -->
+            <!-- Tokens: ["¿", "Centenario", "congestionado", "ahora", "?", "predice"] -->
+            <!-- Row 0 -->
+            <rect x="80" y="40" width="40" height="40" fill="white" opacity="0.1"/>
+            <rect x="120" y="40" width="40" height="40" fill="white" opacity="0.05"/>
+            <rect x="160" y="40" width="40" height="40" fill="white" opacity="0.03"/>
+            <rect x="200" y="40" width="40" height="40" fill="white" opacity="0.04"/>
+            <rect x="240" y="40" width="40" height="40" fill="white" opacity="0.08"/>
+            <rect x="280" y="40" width="40" height="40" fill="white" opacity="0.02"/>
+
+            <!-- Row 1: Centenario (high attention to "congestionado", "predice") -->
+            <rect x="80" y="80" width="40" height="40" fill="white" opacity="0.06"/>
+            <rect x="120" y="80" width="40" height="40" fill="white" opacity="0.15"/>
+            <rect x="160" y="80" width="40" height="40" fill="white" opacity="0.50"/> <!-- High -->
+            <rect x="200" y="80" width="40" height="40" fill="white" opacity="0.10"/>
+            <rect x="240" y="80" width="40" height="40" fill="white" opacity="0.05"/>
+            <rect x="280" y="80" width="40" height="40" fill="white" opacity="0.45"/> <!-- High -->
+
+            <!-- Row 2: congestionado -->
+            <rect x="80" y="120" width="40" height="40" fill="white" opacity="0.04"/>
+            <rect x="120" y="120" width="40" height="40" fill="white" opacity="0.40"/> <!-- High -->
+            <rect x="160" y="120" width="40" height="40" fill="white" opacity="0.20"/>
+            <rect x="200" y="120" width="40" height="40" fill="white" opacity="0.12"/>
+            <rect x="240" y="120" width="40" height="40" fill="white" opacity="0.03"/>
+            <rect x="280" y="120" width="40" height="40" fill="white" opacity="0.35"/> <!-- High -->
+
+            <!-- Row 3: ahora -->
+            <rect x="80" y="160" width="40" height="40" fill="white" opacity="0.07"/>
+            <rect x="120" y="160" width="40" height="40" fill="white" opacity="0.15"/>
+            <rect x="160" y="160" width="40" height="40" fill="white" opacity="0.30"/>
+            <rect x="200" y="160" width="40" height="40" fill="white" opacity="0.18"/>
+            <rect x="240" y="160" width="40" height="40" fill="white" opacity="0.05"/>
+            <rect x="280" y="160" width="40" height="40" fill="white" opacity="0.25"/>
+
+            <!-- Row 4: ? -->
+            <rect x="80" y="200" width="40" height="40" fill="white" opacity="0.10"/>
+            <rect x="120" y="200" width="40" height="40" fill="white" opacity="0.08"/>
+            <rect x="160" y="200" width="40" height="40" fill="white" opacity="0.06"/>
+            <rect x="200" y="200" width="40" height="40" fill="white" opacity="0.05"/>
+            <rect x="240" y="200" width="40" height="40" fill="white" opacity="0.12"/>
+            <rect x="280" y="200" width="40" height="40" fill="white" opacity="0.04"/>
+
+            <!-- Row 5: predice -->
+            <rect x="80" y="240" width="40" height="40" fill="white" opacity="0.05"/>
+            <rect x="120" y="240" width="40" height="40" fill="white" opacity="0.42"/> <!-- High -->
+            <rect x="160" y="240" width="40" height="40" fill="white" opacity="0.38"/> <!-- High -->
+            <rect x="200" y="240" width="40" height="40" fill="white" opacity="0.20"/>
+            <rect x="240" y="240" width="40" height="40" fill="white" opacity="0.03"/>
+            <rect x="280" y="240" width="40" height="40" fill="white" opacity="0.18"/>
+
+            <!-- Column labels (tokens) -->
+            <text x="100" y="30" text-anchor="middle" fill="var(--muted)" font-size="9">¿</text>
+            <text x="140" y="30" text-anchor="middle" fill="var(--accent)" font-size="9" font-weight="600">Cent.</text>
+            <text x="180" y="30" text-anchor="middle" fill="var(--muted)" font-size="9">cong.</text>
+            <text x="220" y="30" text-anchor="middle" fill="var(--muted)" font-size="9">ahora</text>
+            <text x="260" y="30" text-anchor="middle" fill="var(--muted)" font-size="9">?</text>
+            <text x="300" y="30" text-anchor="middle" fill="var(--muted)" font-size="9">pred.</text>
+
+            <!-- Row labels -->
+            <text x="70" y="65" text-anchor="end" fill="var(--muted)" font-size="9">¿</text>
+            <text x="70" y="105" text-anchor="end" fill="var(--accent)" font-size="9" font-weight="600">Cent.</text>
+            <text x="70" y="145" text-anchor="end" fill="var(--muted)" font-size="9">cong.</text>
+            <text x="70" y="185" text-anchor="end" fill="var(--muted)" font-size="9">ahora</text>
+            <text x="70" y="225" text-anchor="end" fill="var(--muted)" font-size="9">?</text>
+            <text x="70" y="265" text-anchor="end" fill="var(--muted)" font-size="9">pred.</text>
+
+            <!-- Title -->
+            <text x="200" y="15" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="600">Pesos de atención (ejemplo simplificado)</text>
+          </svg>
+        </div>
+        <p style="font-size: 0.95rem; color: var(--muted);">
+          $Q$ = queries, $K$ = keys, $V$ = values, $d_k$ = dimensión de clave
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 24: Vision for Panama -->
+  <section class="slide" id="slide-24">
+    <div class="slide-inner">
+      <span class="slide-label">VISIÓN</span>
+      <h2 class="slide-title">Visión para Panamá</h2>
+      <div class="slide-body">
+        <ul style="font-size: 1.25rem; line-height: 1.8;">
+          <li>Gemelo digital urbano completo de la ciudad de Panamá</li>
+          <li>Predicción en tiempo real de congestión y optimización de rutas</li>
+          <li>Reducción de costos logísticos y tiempos de entrega</li>
+          <li>Fundamento matemático: teoría de flujo, ML, optimización</li>
+          <li>Interfaz conversacional LLM para democratizar acceso a insights</li>
+        </ul>
+        <p style="margin-top: 2rem; font-size: 1.125rem; color: var(--accent);">
+          Un hub logístico más eficiente, competitivo y sostenible
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 25: CTA / closing -->
+  <section class="slide" id="slide-25">
+    <div class="slide-inner">
+      <span class="slide-label">GRACIAS</span>
+      <h2 class="slide-title" style="font-size: clamp(2.5rem, 6vw, 4.5rem);">TYR AI</h2>
+      <div class="slide-body">
+        <p style="font-size: 1.5rem; color: var(--muted); margin-bottom: 2rem;">
+          Urban Digital Twin & AI Copilot
+        </p>
+        <p style="font-size: 1.125rem; color: var(--text);">
+          ¿Preguntas?
+        </p>
+        <p style="margin-top: 3rem; font-size: 0.95rem; color: var(--accent2);">
+          Expo Matemática 2025 · Panamá
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // ============================================
+    // Navigation & Progress
+    // ============================================
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progress-bar');
+    const navDotsContainer = document.getElementById('nav-dots');
+    let currentSlide = 0;
+
+    // Create nav dots
+    slides.forEach((slide, index) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot';
+      if (index === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => goTo(index));
+      navDotsContainer.appendChild(dot);
+    });
+
+    const navDots = document.querySelectorAll('.nav-dot');
+
+    function goTo(n) {
+      if (n < 0 || n >= slides.length) return;
+      currentSlide = n;
+      slides[currentSlide].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const progress = (currentSlide / (slides.length - 1)) * 100;
+      progressBar.style.width = progress + '%';
+
+      navDots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentSlide);
+      });
+    }
+
+    // ============================================
+    // Keyboard navigation
+    // ============================================
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
+        goTo(currentSlide + 1);
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        goTo(currentSlide - 1);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goTo(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goTo(slides.length - 1);
+      }
+    });
+
+    // ============================================
+    // Mouse wheel navigation (debounced)
+    // ============================================
+    let wheelTimeout;
+    document.addEventListener('wheel', (e) => {
+      clearTimeout(wheelTimeout);
+      wheelTimeout = setTimeout(() => {
+        if (e.deltaY > 0) {
+          goTo(currentSlide + 1);
+        } else if (e.deltaY < 0) {
+          goTo(currentSlide - 1);
+        }
+      }, 600);
+    }, { passive: true });
+
+    // ============================================
+    // Touch swipe navigation
+    // ============================================
+    let touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      const touchEndY = e.changedTouches[0].clientY;
+      const diff = touchStartY - touchEndY;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) {
+          goTo(currentSlide + 1);
+        } else {
+          goTo(currentSlide - 1);
+        }
+      }
+    }, { passive: true });
+
+    // ============================================
+    // Intersection Observer for entrance animations
+    // ============================================
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+          entry.target.classList.add('is-visible');
+          // Update current slide index
+          const index = Array.from(slides).indexOf(entry.target);
+          if (index !== -1) {
+            currentSlide = index;
+            updateProgress();
+          }
+        } else {
+          entry.target.classList.remove('is-visible');
+        }
+      });
+    }, { threshold: 0.6 });
+
+    slides.forEach(slide => observer.observe(slide));
+
+    // Initialize first slide as visible
+    slides[0].classList.add('is-visible');
+    updateProgress();
+  </script>
+</body>
+</html>
